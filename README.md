@@ -1,8 +1,8 @@
 # simple-recursive-ui
-SRUI is a simple UI framework for JavaScript that makes recursively locating your HTML elements a breeze
+SRUI is a simple UI framework for JavaScript that makes recursively locating your HTML elements a breeze.
 
 # example
-The file example.html illustrates how to use the library
+The file example.html illustrates how to use the library.
 
 # gotchas
 1. To specify an event handler, do not use arrow functions! You have to use the "function" keyword. Otherwise your code will probably not work.
