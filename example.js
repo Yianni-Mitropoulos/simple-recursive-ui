@@ -1,4 +1,4 @@
-/* Define a combined TextNode and Slider component that displays the value of the slider */
+/* Define a combined TEXT_NODE and SLIDER component such that the text displays the current value of the slider */
 
 function TEXT_BEFORE_SLIDER(obj) {
     min   = obj["min"]
