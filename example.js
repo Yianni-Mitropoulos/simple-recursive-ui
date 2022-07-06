@@ -71,7 +71,7 @@ cell_style = {
 body.SRUI_namedUndernodes["tableWithDeletionFunctionality"].forEach((table) => {
     table.SRUI_forEach((row) => {
         row.SRUI_forEach((cell) => {
-            SRUI_apply_style(cell, cell_style)
+            SRUI_applyStyle(cell, cell_style)
             cell.onclick = function() {
                 this.SRUI_remove()
                 console.log(body.SRUI_namedUndernodes)

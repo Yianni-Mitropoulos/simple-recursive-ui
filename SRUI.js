@@ -1,4 +1,4 @@
-function SRUI_apply_style(component, style) {
+function SRUI_applyStyle(component, style) {
     if (style !== undefined) {
         Object.entries(style).forEach(([key, value]) => {
             component.style[key] = value
@@ -6,7 +6,7 @@ function SRUI_apply_style(component, style) {
     }
 }
 
-function SRUI_toggle_classes(component, classes) {
+function SRUI_toggleClasses(component, classes) {
     if (classes !== undefined) {
         classes.forEach((class_name) => {
             component.classList.toggle(class_name)
@@ -54,8 +54,8 @@ function SRUI_new_component(f) {
             component.SRUI_name = SRUI_name
         }
         /* Apply style and toggle classes */
-        SRUI_apply_style(component, obj["style"])
-        SRUI_toggle_classes(component, obj["classes"])
+        SRUI_applyStyle(component, obj["style"])
+        SRUI_toggleClasses(component, obj["classes"])
         /* Apply event handlers */
         /* Note: the code below should really throw an error if an arrow function was used for the event handler. */
         /* But I don't know how to efficiently test for being an arrow function, so right now it fails silently. */
