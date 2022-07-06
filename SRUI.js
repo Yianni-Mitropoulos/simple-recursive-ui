@@ -53,7 +53,7 @@ function SRUI_new_component(f) {
         if (SRUI_name !== undefined) {
             component.SRUI_name = SRUI_name
         }
-        /* Apply style and toggle classes */
+        /* Apply the relevant style and toggle the relevant classes */
         SRUI_applyStyle(component, obj["style"])
         SRUI_toggleClasses(component, obj["classes"])
         /* Apply event handlers */
@@ -64,7 +64,7 @@ function SRUI_new_component(f) {
                 component.addEventListener(key.slice(2), value.bind(component))
             }
         })
-        /* Define the 'getNearestNodes' method (note the pluralization) */
+        /* Define the 'SRUI_getNearestNodes' method (note the pluralization) */
         component.SRUI_getNearestNodes = (SRUI_name) => {
             let node = component;
             while (true) {
@@ -80,7 +80,7 @@ function SRUI_new_component(f) {
                 }
             }
         }
-        /* Define the 'getNearestNode' method (note the lack of pluralization) */
+        /* Define the 'SRUI_getNearestNode' method (note the lack of pluralization) */
         component.SRUI_getNearestNode = (SRUI_name) => {
             let undernodeList = component.SRUI_getNearestNodes(SRUI_name)
             if (undernodeList.length > 1) {
