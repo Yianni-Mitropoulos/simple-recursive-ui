@@ -70,6 +70,7 @@ function SRUI_new_component(f) {
 
         /* Attach a method for attaching new (proper) undernodes */
         component.SRUI_attachUndernode = (newUndernode) => {
+            console.log(newUndernode)
             let undernodeList = component.SRUI_properUndernodes[newUndernode.SRUI_name];
             if (undernodeList === undefined) {
                 undernodeList = []
@@ -91,31 +92,35 @@ function SRUI_new_component(f) {
         }
 
         /* Attach a method for appending child nodes */
-        component.SRUI_appendChild = (child) => {
-            /* Assign the component we're building as the the child's parent */
-            child.SRUI_parent = component
-            /* Register the child's undernodes (includingthe child element itself) so that they're also undernodes of the component and all its ancestors */
-            component.SRUI_forEachAncestor((ancestor) => {
-                child.SRUI_forEachUndernode((undernode) => {
-                    ancestor.SRUI_attachUndernode(undernode)
+        component.SRUI_appendChild = (...args) => {
+            args.forEach((child) => {
+                /* Assign the component we're building as the the child's parent */
+                child.SRUI_parent = component
+                /* Register the child's undernodes (including the child element itself) so that they're also undernodes of the component and all its ancestors */
+                component.SRUI_forEachAncestor((ancestor) => {
+                    child.SRUI_forEachUndernode((undernode) => {
+                        ancestor.SRUI_attachUndernode(undernode)
+                    })
                 })
+                component.SRUI_children.push(child)
+                component.append(child)
             })
-            component.SRUI_children.push(child)
-            component.append(child)
         }
 
         /* Attach a method for prepending child nodes */
-        component.SRUI_prependChild = (child) => {
-            /* Assign the component we're building as the the child's parent */
-            child.SRUI_parent = component
-            /* Register the child's undernodes (includingthe child element itself) so that they're also undernodes of the component and all its ancestors */
-            component.SRUI_forEachAncestor((ancestor) => {
-                child.SRUI_forEachUndernode((undernode) => {
-                    ancestor.SRUI_attachUndernode(undernode)
+        component.SRUI_prependChild = (...args) => {
+            args.forEach((child) => {
+                /* Assign the component we're building as the the child's parent */
+                child.SRUI_parent = component
+                /* Register the child's undernodes (including the child element itself) so that they're also undernodes of the component and all its ancestors */
+                component.SRUI_forEachAncestor((ancestor) => {
+                    child.SRUI_forEachUndernode((undernode) => {
+                        ancestor.SRUI_attachUndernode(undernode)
+                    })
                 })
+                component.SRUI_children.unshift(child)
+                component.prepend(child)
             })
-            component.SRUI_children.unshift(child)
-            component.prepend(child)
         }
 
         /* Attach a method for removing the component we're constructing */
@@ -126,15 +131,14 @@ function SRUI_new_component(f) {
             let arr = component.SRUI_parent.SRUI_children
             let index = arr.indexOf(component)
             arr.splice(index, 1)
-            /* Remove it from all relevant undernode lists */
-            if (component.SRUI_name !== undefined) {
-                let node = component.SRUI_parent
-                while (node !== undefined) {
-                    let arr = SRUI_properUndernodes[component.SRUI_name]
-                    let index = arr.indexOf(component)
-                    arr.splice(index, 1)
-                }
-            }
+            /* Remove it and all its named descendants from all ancestral undernode lists */
+            component.SRUI_forEachProperAncestor((ancestor) => {
+                component.SRUI_forEachUndernode((undernode) => {
+                    let properUndernodes = ancestor.SRUI_properUndernodes[undernode.SRUI_name]
+                    let index = properUndernodes.indexOf(undernode)
+                    properUndernodes.splice(index, 1)
+                })
+            })
         }
 
         /* Append the children passed that were passed in */
