@@ -219,6 +219,18 @@ CLEAR_FLOATS = SRUI_new_component((obj) => {
     return div
 })
 
+/* Side by side functionality */
+
+SIDE_BY_SIDE = (left, right) => {
+    left.style.float  = "left"
+    right.style.float = "right"
+    return [
+        left,
+        right,
+        CLEAR_FLOATS({})
+    ]
+}
+
 /* Slider */
 
 SLIDER = SRUI_new_component((obj) => {
@@ -253,13 +265,3 @@ TABLE_ROW = SRUI_new_component((obj) => {
 TABLE = SRUI_new_component((obj) => {
     return document.createElement('table')
 })
-
-LEFT_RIGHT_CLEAR = (left, right) => {
-    left.style.float  = "left"
-    right.style.float = "right"
-    return [
-        left,
-        right,
-        CLEAR_FLOATS({})
-    ]
-}

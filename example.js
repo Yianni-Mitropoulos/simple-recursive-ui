@@ -2,7 +2,7 @@
 
 function PARAGRAPH_SLIDER(obj) {
     return DIV(obj,
-        ...LEFT_RIGHT_CLEAR(
+        ...SIDE_BY_SIDE(
             PARAGRAPH({},
                 TEXT_NODE({text: "0", SRUI_name: "displayForSliderValue"})
             ),
