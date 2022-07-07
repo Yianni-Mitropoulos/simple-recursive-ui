@@ -70,7 +70,6 @@ function SRUI_new_component(f) {
 
         /* Attach a method for attaching new (proper) undernodes */
         component.SRUI_attachUndernode = (newUndernode) => {
-            console.log(newUndernode)
             let undernodeList = component.SRUI_properUndernodes[newUndernode.SRUI_name];
             if (undernodeList === undefined) {
                 undernodeList = []
