@@ -1,37 +1,40 @@
 /* Define a combined TEXT_NODE and SLIDER component such that the text displays the current value of the slider */
 
-function TEXT_BEFORE_SLIDER(obj) {
-    min   = obj["min"]
-    value = obj["value"]
-    max   = obj["max"]
-    return DIV({style: {width: "160px"}},
-        PARAGRAPH({style: {float: 'left'}},
-            TEXT_NODE({
-                text: "0",
-                SRUI_name: "displayForSliderValue"
-            })
-        ),
-        SLIDER({
-            min: min,
-            value: value,
-            max: max,
-            style: {float: 'right', marginTop: '17px'},
-            oninput: function () {
-                let slider_value = this.value
-                let nearest_display_area = this.SRUI_getNearestNode('displayForSliderValue')
-                nearest_display_area.nodeValue = slider_value.toString()
-            },
-        }),
-        CLEAR_FLOATS({})
+function PARAGRAPH_SLIDER(obj) {
+    return DIV(obj,
+        ...LEFT_RIGHT_CLEAR(
+            PARAGRAPH({},
+                TEXT_NODE({text: "0", SRUI_name: "displayForSliderValue"})
+            ),
+            SLIDER({
+                min: obj["min"],
+                value: obj["value"],
+                max: obj["max"],
+                style: {marginTop: '17px'},
+                oninput: function () {
+                    let slider_value = this.value
+                    let nearest_display_area = this.SRUI_getNearestNode('displayForSliderValue')
+                    nearest_display_area.nodeValue = slider_value.toString()
+                },
+            }),  
+        )
     )
+}
+
+/* Explain how we want table cells to be styled */
+
+cell_style = {
+    verticalAlign: 'top',
+    padding: '1em',
+    backgroundColor: 'Green'
 }
 
 /* Create the page */
 
 body = BODY({},
     PARAGRAPH({}, TEXT_NODE({text: "Here's some sliders for you: "})),
-    TEXT_BEFORE_SLIDER({min: -5, value: 0, max: 5}),
-    TEXT_BEFORE_SLIDER({min: -5, value: 0, max: 5}),
+    PARAGRAPH_SLIDER({min: -5, value: 0, max: 5, style: {width: "160px"}}),
+    PARAGRAPH_SLIDER({min: -5, value: 0, max: 5, style: {width: "160px"}}),
     PARAGRAPH({}, TEXT_NODE({text: "And here's a button: "})),
     DIV({},
         BUTTON({
@@ -46,7 +49,15 @@ body = BODY({},
         PARAGRAPH({SRUI_name: 'outputField'})
     ),
     PARAGRAPH({}, TEXT_NODE({text: "Finally, a table for you. Try clicking on the elements!"})),
-    TABLE({style: {textAlign: "center"}, SRUI_name: "tableWithDeletionFunctionality"},
+    TABLE({
+            style: {textAlign: "center"},
+            forEachGrandchild: (cell) => {
+                SRUI_applyStyle(cell, cell_style)
+                cell.onclick = function() {
+                    this.SRUI_remove()
+                }
+            }
+        },
         TABLE_ROW({},
             TABLE_DATA_CELL({}, TEXT_NODE({"text": "1"})),
             TABLE_DATA_CELL({}, TEXT_NODE({"text": "2"})),
@@ -59,23 +70,3 @@ body = BODY({},
         ),
     )
 )
-
-/* Style the table and add event handlers to each of its cells */
-
-cell_style = {
-    verticalAlign: 'top',
-    padding: '1em',
-    backgroundColor: 'Green'
-}
-
-body.SRUI_namedUndernodes["tableWithDeletionFunctionality"].forEach((table) => {
-    table.SRUI_forEach((row) => {
-        row.SRUI_forEach((cell) => {
-            SRUI_applyStyle(cell, cell_style)
-            cell.onclick = function() {
-                this.SRUI_remove()
-                console.log(body.SRUI_namedUndernodes)
-            }
-        })
-    })
-})

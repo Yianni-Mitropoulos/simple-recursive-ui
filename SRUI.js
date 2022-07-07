@@ -18,6 +18,7 @@ function SRUI_new_component(f) {
     function constructor(obj, ...children) {
         /* Create the component */
         let component = f(obj)
+
         /* Maintain the underlying double-linked tree structure and append the children as HTML elements */
         component.SRUI_namedUndernodes = {}
         if (children === undefined) {
@@ -48,14 +49,17 @@ function SRUI_new_component(f) {
             })
             component.append(child)
         })
+
         /* Store name */
         let SRUI_name = obj["SRUI_name"]
         if (SRUI_name !== undefined) {
             component.SRUI_name = SRUI_name
         }
+
         /* Apply the relevant style and toggle the relevant classes */
         SRUI_applyStyle(component, obj["style"])
         SRUI_toggleClasses(component, obj["classes"])
+
         /* Apply event handlers */
         /* Note: the code below should really throw an error if an arrow function was used for the event handler. */
         /* But I don't know how to efficiently test for being an arrow function, so right now it fails silently. */
@@ -64,6 +68,7 @@ function SRUI_new_component(f) {
                 component.addEventListener(key.slice(2), value.bind(component))
             }
         })
+
         /* Define the 'SRUI_getNearestNodes' method (note the pluralization) */
         component.SRUI_getNearestNodes = (SRUI_name) => {
             let node = component;
@@ -80,6 +85,7 @@ function SRUI_new_component(f) {
                 }
             }
         }
+
         /* Define the 'SRUI_getNearestNode' method (note the lack of pluralization) */
         component.SRUI_getNearestNode = (SRUI_name) => {
             let undernodeList = component.SRUI_getNearestNodes(SRUI_name)
@@ -88,6 +94,7 @@ function SRUI_new_component(f) {
             }
             return undernodeList[0]
         }
+
         /* Define the 'SRUI_remove' method */
         component.SRUI_remove = () => {
             /* Remove it from the DOM */
@@ -106,10 +113,29 @@ function SRUI_new_component(f) {
                 }
             }
         }
-        /* Define the 'SRUI_forEach' method */
-        component.SRUI_forEach = (f) => {
+
+        /* Define the 'SRUI_forEachChild' method and call if appropriate */
+        component.SRUI_forEachChild = (f) => {
             component.SRUI_children.forEach(f)
         }
+
+        let forEachChild = obj["forEachChild"]
+        if (forEachChild !== undefined) {
+            component.SRUI_forEachChild(forEachChild)
+        }
+
+        /* Define the 'SRUI_forEachGrandchild' method and call if appropriate */
+        component.SRUI_forEachGrandchild = (f) => {
+            component.SRUI_forEachChild((child) => {
+                child.SRUI_forEachChild(f)
+            })
+        }
+
+        let forEachGrandchild = obj["forEachGrandchild"]
+        if (forEachGrandchild !== undefined) {
+            component.SRUI_forEachGrandchild(forEachGrandchild)
+        }
+
         /* Return the component instance that we just constructed */
         return component
     }
@@ -179,3 +205,13 @@ TABLE_ROW = SRUI_new_component((obj) => {
 TABLE = SRUI_new_component((obj) => {
     return document.createElement('table')
 })
+
+LEFT_RIGHT_CLEAR = (left, right) => {
+    left.style.float  = "left"
+    right.style.float = "right"
+    return [
+        left,
+        right,
+        CLEAR_FLOATS({})
+    ]
+}
