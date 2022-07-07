@@ -32,7 +32,7 @@ cell_style = {
 /* Create the page */
 
 body = BODY({},
-    PARAGRAPH({}, TEXT_NODE({text: "Here's some sliders for you: "})),
+    PARAGRAPH({style: {color: "Red"}}, TEXT_NODE({text: "Here's some sliders for you: "})),
     PARAGRAPH_SLIDER({min: -5, value: 0, max: 5, style: {width: "160px"}}),
     PARAGRAPH_SLIDER({min: -5, value: 0, max: 5, style: {width: "160px"}}),
     PARAGRAPH({}, TEXT_NODE({text: "And here's a button: "})),
@@ -68,5 +68,5 @@ body = BODY({},
             TABLE_DATA_CELL({}, TEXT_NODE({"text": "5"})),
             TABLE_DATA_CELL({}, TEXT_NODE({"text": "6"})),
         ),
-    )
+    ),
 )

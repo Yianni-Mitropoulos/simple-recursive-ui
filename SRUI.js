@@ -21,13 +21,10 @@ function SRUI_new_component(f) {
 
         /* Maintain the underlying double-linked tree structure and append the children as HTML elements */
         component.SRUI_namedUndernodes = {}
-        if (children === undefined) {
-            children = []
-            console.log('foo')
-        }
         component.SRUI_children = children
         children.forEach((child) => {
             child.SRUI_parent = component
+            component.append(child)
             /* Add the child node, if named */
             let child_name = child.SRUI_name
             if (child_name !== undefined) {
@@ -47,7 +44,6 @@ function SRUI_new_component(f) {
                 }
                 undernodeList.push(...value)
             })
-            component.append(child)
         })
 
         /* Store name */
@@ -114,21 +110,21 @@ function SRUI_new_component(f) {
             }
         }
 
-        /* Define the 'SRUI_forEachChild' method and call if appropriate */
+        /* Define the SRUI_forEach methods */
         component.SRUI_forEachChild = (f) => {
             component.SRUI_children.forEach(f)
         }
 
-        let forEachChild = obj["forEachChild"]
-        if (forEachChild !== undefined) {
-            component.SRUI_forEachChild(forEachChild)
-        }
-
-        /* Define the 'SRUI_forEachGrandchild' method and call if appropriate */
         component.SRUI_forEachGrandchild = (f) => {
             component.SRUI_forEachChild((child) => {
                 child.SRUI_forEachChild(f)
             })
+        }
+
+        /* Call the SRUI_forEach methods if appropriate */
+        let forEachChild = obj["forEachChild"]
+        if (forEachChild !== undefined) {
+            component.SRUI_forEachChild(forEachChild)
         }
 
         let forEachGrandchild = obj["forEachGrandchild"]
