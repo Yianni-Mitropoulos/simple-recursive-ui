@@ -41,7 +41,6 @@ body = BODY({},
             text: "I'm a button",
             onclick: function() {
                 let output_field = this.SRUI_getNearestNode('outputField')
-                console.log(output_field)
                 output_field.SRUI_appendChild(
                     TEXT_NODE({text: "You clicked the button!"}), BREAK({})
                 )
