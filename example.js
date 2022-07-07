@@ -32,7 +32,7 @@ cell_style = {
 /* Create the page */
 
 body = BODY({},
-    PARAGRAPH({style: {color: "Red"}}, TEXT_NODE({text: "Here's some sliders for you: "})),
+    PARAGRAPH({style: {}}, TEXT_NODE({text: "Here's some sliders for you: "})),
     PARAGRAPH_SLIDER({min: -5, value: 0, max: 5, style: {width: "160px"}}),
     PARAGRAPH_SLIDER({min: -5, value: 0, max: 5, style: {width: "160px"}}),
     PARAGRAPH({}, TEXT_NODE({text: "And here's a button: "})),
@@ -41,7 +41,8 @@ body = BODY({},
             text: "I'm a button",
             onclick: function() {
                 let output_field = this.SRUI_getNearestNode('outputField')
-                output_field.append(
+                console.log(output_field)
+                output_field.SRUI_appendChild(
                     TEXT_NODE({text: "You clicked the button!"}), BREAK({})
                 )
             }

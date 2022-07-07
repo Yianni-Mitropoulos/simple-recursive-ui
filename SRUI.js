@@ -19,79 +19,106 @@ function SRUI_new_component(f) {
         /* Create the component */
         let component = f(obj)
 
-        /* Maintain the underlying double-linked tree structure and append the children as HTML elements */
-        component.SRUI_namedUndernodes = {}
-        component.SRUI_children = children
-        children.forEach((child) => {
-            child.SRUI_parent = component
-            component.append(child)
-            /* Add the child node, if named */
-            let child_name = child.SRUI_name
-            if (child_name !== undefined) {
-                let undernodeList = component.SRUI_namedUndernodes[child_name];
-                if (undernodeList === undefined) {
-                    undernodeList = []
-                    component.SRUI_namedUndernodes[child_name] = undernodeList
-                }
-                undernodeList.push(child)
-            }
-            /* Add its children (if named), too */
-            Object.entries(child.SRUI_namedUndernodes).forEach(([key, value]) => {
-                let undernodeList = component.SRUI_namedUndernodes[key];
-                if (undernodeList === undefined) {
-                    undernodeList = []
-                    component.SRUI_namedUndernodes[key] = undernodeList
-                }
-                undernodeList.push(...value)
-            })
-        })
+        /* Apply the relevant style and toggle the relevant classes */
+        SRUI_applyStyle(component, obj["style"])
+        SRUI_toggleClasses(component, obj["classes"])
 
-        /* Store name */
+        /* Store the name of the component we're creating (if it has one) on the component itself */
         let SRUI_name = obj["SRUI_name"]
         if (SRUI_name !== undefined) {
             component.SRUI_name = SRUI_name
         }
 
-        /* Apply the relevant style and toggle the relevant classes */
-        SRUI_applyStyle(component, obj["style"])
-        SRUI_toggleClasses(component, obj["classes"])
+        /* Set the parent to "undefined" for emphasis (N.B. this step isn't strictly necessary) */
+        component.SRUI_parent = undefined
 
-        /* Apply event handlers */
-        /* Note: the code below should really throw an error if an arrow function was used for the event handler. */
-        /* But I don't know how to efficiently test for being an arrow function, so right now it fails silently. */
-        Object.entries(obj).forEach(([key, value]) => {
-            if (key.slice(0, 2) === "on") {
-                component.addEventListener(key.slice(2), value.bind(component))
-            }
-        })
-
-        /* Define the 'SRUI_getNearestNodes' method (note the pluralization) */
-        component.SRUI_getNearestNodes = (SRUI_name) => {
-            let node = component;
-            while (true) {
-                try {
-                    let namedUndernodes = node.SRUI_namedUndernodes
-                    var undernodeList = namedUndernodes[SRUI_name]
-                    node = node.SRUI_parent
-                } catch(error) {
-                    return []
-                }
-                if (undernodeList !== undefined) {
-                    return undernodeList
-                }
+        /* Attach a method for traversing the ancestors of the component we're creating */
+        component.SRUI_forEachAncestor = (f) => {
+            let ancestor = component
+            while (ancestor !== undefined) {
+                f(ancestor)
+                ancestor = ancestor.SRUI_parent
             }
         }
 
-        /* Define the 'SRUI_getNearestNode' method (note the lack of pluralization) */
-        component.SRUI_getNearestNode = (SRUI_name) => {
-            let undernodeList = component.SRUI_getNearestNodes(SRUI_name)
-            if (undernodeList.length > 1) {
-                throw `Too many nodes called ${SRUI_name}. There needs to be exactly one such node encountered for this method to succeed.`
+        /* Attach a method for traversing the proper ancestors of the component we're creating */
+        component.SRUI_forEachProperAncestor = (f) => {
+            let ancestor = component.SRUI_parent
+            while (ancestor !== undefined) {
+                f(ancestor)
+                ancestor = ancestor.SRUI_parent
             }
-            return undernodeList[0]
         }
 
-        /* Define the 'SRUI_remove' method */
+        /* Initialize the list of children of the component we're creating */ 
+        component.SRUI_children = []
+
+        /* Attach a method for traversing the child nodes of the component we're creating */
+        component.SRUI_forEachChild = (f) => {
+            component.SRUI_children.forEach(f)
+        }
+
+        /* Attach a method for traversing the grandchild nodes of the component we're creating */
+        component.SRUI_forEachGrandchild = (f) => {
+            component.SRUI_forEachChild((child) => {
+                child.SRUI_forEachChild(f)
+            })
+        }        
+        
+        /* Initialize the dictionary of undernodes of the component we're creating */
+        component.SRUI_properUndernodes = {}
+
+        /* Attach a method for attaching new (proper) undernodes */
+        component.SRUI_attachUndernode = (newUndernode) => {
+            let undernodeList = component.SRUI_properUndernodes[newUndernode.SRUI_name];
+            if (undernodeList === undefined) {
+                undernodeList = []
+                component.SRUI_properUndernodes[newUndernode.SRUI_name] = undernodeList
+            }
+            undernodeList.push(newUndernode)
+        }
+
+        /* Attach a method for iterating over undernodes */
+        component.SRUI_forEachUndernode = (f) => {
+            Object.values(component.SRUI_properUndernodes).forEach((value) => {
+                value.forEach((undernode) => {
+                    f(undernode)
+                })
+            })
+            if (component.SRUI_name !== undefined) {
+                f(component)
+            }
+        }
+
+        /* Attach a method for appending child nodes */
+        component.SRUI_appendChild = (child) => {
+            /* Assign the component we're building as the the child's parent */
+            child.SRUI_parent = component
+            /* Register the child's undernodes (includingthe child element itself) so that they're also undernodes of the component and all its ancestors */
+            component.SRUI_forEachAncestor((ancestor) => {
+                child.SRUI_forEachUndernode((undernode) => {
+                    ancestor.SRUI_attachUndernode(undernode)
+                })
+            })
+            component.SRUI_children.push(child)
+            component.append(child)
+        }
+
+        /* Attach a method for prepending child nodes */
+        component.SRUI_prependChild = (child) => {
+            /* Assign the component we're building as the the child's parent */
+            child.SRUI_parent = component
+            /* Register the child's undernodes (includingthe child element itself) so that they're also undernodes of the component and all its ancestors */
+            component.SRUI_forEachAncestor((ancestor) => {
+                child.SRUI_forEachUndernode((undernode) => {
+                    ancestor.SRUI_attachUndernode(undernode)
+                })
+            })
+            component.SRUI_children.unshift(child)
+            component.prepend(child)
+        }
+
+        /* Attach a method for removing the component we're constructing */
         component.SRUI_remove = () => {
             /* Remove it from the DOM */
             component.remove()
@@ -103,23 +130,45 @@ function SRUI_new_component(f) {
             if (component.SRUI_name !== undefined) {
                 let node = component.SRUI_parent
                 while (node !== undefined) {
-                    let arr = SRUI_namedUndernodes[component.SRUI_name]
+                    let arr = SRUI_properUndernodes[component.SRUI_name]
                     let index = arr.indexOf(component)
                     arr.splice(index, 1)
                 }
             }
         }
 
-        /* Define the SRUI_forEach methods */
-        component.SRUI_forEachChild = (f) => {
-            component.SRUI_children.forEach(f)
+        /* Append the children passed that were passed in */
+        children.forEach((child) => {
+            component.SRUI_appendChild(child)
+        })
+
+        /* Define the 'SRUI_getNearestNode' method */
+        component.SRUI_getNearestNode = (SRUI_name) => {
+            let retval = undefined;
+            component.SRUI_forEachAncestor((ancestor) => {
+                if (retval !== undefined) {
+                    return
+                }
+                let undernodeList = ancestor.SRUI_properUndernodes[SRUI_name]
+                if (undernodeList !== undefined && undernodeList.length !== 0) {
+                    if (undernodeList.length == 1) {
+                        retval = undernodeList[0]
+                    } else {
+                        throw "There's more than one undernode with that name!"
+                    }
+                }
+            })
+            return retval
         }
 
-        component.SRUI_forEachGrandchild = (f) => {
-            component.SRUI_forEachChild((child) => {
-                child.SRUI_forEachChild(f)
-            })
-        }
+        /* Attach event handlers */
+        /* NOTE: The code below should really throw an error if an arrow function was used for the event handler. */
+        /* But I don't know how to efficiently test for being an arrow function, so right now it fails silently.  */
+        Object.entries(obj).forEach(([key, value]) => {
+            if (key.slice(0, 2) === "on") {
+                component.addEventListener(key.slice(2), value.bind(component))
+            }
+        })
 
         /* Call the SRUI_forEach methods if appropriate */
         let forEachChild = obj["forEachChild"]
@@ -131,7 +180,7 @@ function SRUI_new_component(f) {
         if (forEachGrandchild !== undefined) {
             component.SRUI_forEachGrandchild(forEachGrandchild)
         }
-
+        
         /* Return the component instance that we just constructed */
         return component
     }
