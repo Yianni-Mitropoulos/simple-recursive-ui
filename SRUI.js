@@ -61,7 +61,7 @@ function SRUI_new_component(isLeaf, f) {
 
         /* Define the 'SRUI_getNearestNode' method */
         component.SRUI_getNearestNode = (SRUI_name) => {
-            let retval = undefined;
+            let retval = undefined
             component.SRUI_forEachAncestor((ancestor) => {
                 if (retval !== undefined) {
                     return
@@ -136,9 +136,9 @@ function SRUI_new_component(isLeaf, f) {
         component.SRUI_children = []
         component.SRUI_properUndernodes = {}
         component.SRUI_name = undefined
-        component.SRUI_margination = 0
+        component.SRUI_margination = undefined
         component.SRUI_state = {} // This line create spaces for arbitrary data that the user of library may want to store
-        
+
         /* If the component we're constructing is a leaf, we're done at this point */
         if (isLeaf) {
             let F = finalize.bind(component)
@@ -146,8 +146,41 @@ function SRUI_new_component(isLeaf, f) {
             return component
         }
         /* Otherwise... */
+
         /* Attach a method for altering margination */
-        component.SRUI_setMargination = (val) => {component.SRUI_margination = val;    return component}
+        component.SRUI_setMargination = (margination) => {
+            component.SRUI_margination = margination
+            let flag = false
+            component.SRUI_forEachChild((child) => {
+                if (child.SRUI_inheritMargination) {
+                    child.SRUI_setMargination(margination)
+                }
+                if (flag) {
+                    child.style.marginTop = margination
+                }
+                flag = true
+            })
+            return component
+        }
+
+        /* Attach a component for recursively getting margination */
+        component.SRUI_getMargination = () => {
+            let retval = undefined
+            component.SRUI_forEachAncestor((ancestor) => {
+                if (retval === undefined) {
+                    if (ancestor.SRUI_margination !== undefined) {
+                        retval = ancestor.SRUI_margination
+                    }
+                }
+            })
+            /*
+            if (component.nodeName == 'BODY') {
+                console.log(component)
+                console.log(retval)
+            }
+            */
+            return retval
+        }
         
         /* Attach a method for traversing the grandchild nodes of the component we're creating */
         component.SRUI_forEachGrandchild = (f) => {
@@ -160,7 +193,7 @@ function SRUI_new_component(isLeaf, f) {
         
         /* Attach a method for attaching new (proper) undernodes */
         component.SRUI_attachUndernode = (newUndernode) => {
-            let undernodeList = component.SRUI_properUndernodes[newUndernode.SRUI_name];
+            let undernodeList = component.SRUI_properUndernodes[newUndernode.SRUI_name]
             if (undernodeList === undefined) {
                 undernodeList = []
                 component.SRUI_properUndernodes[newUndernode.SRUI_name] = undernodeList
@@ -179,7 +212,14 @@ function SRUI_new_component(isLeaf, f) {
                         ancestor.SRUI_attachUndernode(undernode)
                     })
                 })
+                /* Append the child onto the internal SRUI children list */
                 component.SRUI_children.push(child)
+                /* If the length of the above list is 2 or more, give the child a topMargin */
+                let margination = component.SRUI_getMargination()
+                if (margination !== undefined) {
+                    child.style.marginTop = margination
+                }
+                /* Append the child to the relevant part of the DOM */
                 component.append(child)
             })
         }
@@ -246,7 +286,15 @@ BUTTON = SRUI_new_component(true, (msg) => {
 
 BODY = SRUI_new_component(false, () => {
     let body = document.body
-    return [body, () => {}]
+    return [body, function() {
+        console.log(body.SRUI_children[body.SRUI_children.length - 1].style.position === 'fixed')
+        if (body.SRUI_children.length !== 0) {
+            let last_child = body.SRUI_children[body.SRUI_children.length - 1]
+            if (last_child.style.position === 'fixed') {
+                body.style.paddingBottom = `${last_child.clientHeight}px`
+            }
+        }
+    }]
 })
 
 PARAGRAPH = SRUI_new_component(false, () => {
@@ -254,8 +302,15 @@ PARAGRAPH = SRUI_new_component(false, () => {
     return [p, () => {}]
 })
 
-DIVISION = SRUI_new_component(false, () => {
+VERTICAL_DIV = SRUI_new_component(false, () => {
     let div = document.createElement('div')
+    div.SRUI_inheritMargination = true
+    return [div, () => {}]
+})
+
+HORIZONTAL_DIV = SRUI_new_component(false, () => {
+    let div = document.createElement('div')
+    div.SRUI_inheritMargination = false
     return [div, () => {}]
 })
 
@@ -307,7 +362,7 @@ FOOTER = SRUI_new_component(false, () => {
 /* Side by side functionality */
 
 CLEAR_FLOATS = SRUI_new_component(true, () => {
-    div = document.createElement('div')
+    let div = document.createElement('div')
     div.style.clear = "both"
     return [div, () => {}]
 })
