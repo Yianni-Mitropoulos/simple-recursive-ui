@@ -421,3 +421,36 @@ SIDE_BY_SIDE = (left, right) => {
         CLEAR_FLOATS()
     ]
 }
+
+/* Define CSS functionality */
+
+CSS_RAW = (text) => {
+    let style = document.createElement('style')
+    style.textContent = text
+    document.head.appendChild(style)
+}
+
+CSS_CLASS = (str, pseudos) => {
+    SRUI_cssClassCount += 1
+    let className = `SRUI_${SRUI_cssClassCount}`
+    let text = `.${className} {${str}}`
+    if (pseudos !== undefined) {
+        Object.entries(pseudos).forEach(([key, value]) => {
+            text += `\n.${className}:${key} {${value}}`
+        })
+    }
+    CSS_RAW(text)
+    return className
+}
+
+/* Initialize */
+
+let SRUI_cssClassCount = 0
+
+CSS_RAW(`
+    *, *::before, *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0
+    }
+`)

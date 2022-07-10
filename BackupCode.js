@@ -25,3 +25,10 @@ function SRUI_getPixelsPerEm() {
     console.log(`window em width = ${emWidth}, time elapsed = ${(performance.now() - time)}ms`);
     return singleEmPx;
 }
+
+CSS_PSEUDO = (className, pseudoClass, str) => {
+    let text = `.${className}:${pseudoClass} {${str}}`
+    let style = document.createElement('style')
+    style.textContent = text
+    document.head.appendChild(style)
+}

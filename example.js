@@ -28,28 +28,33 @@ function PARAGRAPH_SLIDER(obj) {
     })
 }
 
-/* Intialize variables controlling the style and appearance */
+/* Define our styles as variables */
 
-std_padding = "1em"
+stdPadding = "1em"
 stdMargination = "0.7em"
 
-cell_style = {
-    verticalAlign: 'top',
-    backgroundColor: 'Green',
-    padding: std_padding,
-}
+tableCell = CSS_CLASS(
+    ` vertical-align: top;
+      background-color: Green;
+      padding: ${stdPadding};
+      transition: 0.16s;
+    `, {
+    hover:
+    ` background-color: Yellow;
+    `
+})
 
 paragraphSliderWidth = 14; // em
 
 /* Create the page */
 
-body = BODY(
+BODY(
     HEADER(
         TEXT("Simple Recursive User Interface (SRUI)")
     )
     .SRUI_applyStyle({
         position: "sticky",
-        padding: std_padding,
+        padding: stdPadding,
         backgroundColor: "Blue",
     }),
     VERTICAL_DIV(
@@ -104,7 +109,7 @@ body = BODY(
             )
             .SRUI_applyStyle({textAlign: "center"})
             .SRUI_forEachGrandchildForever((cell) => {
-                cell.SRUI_applyStyle(cell_style)
+                cell.SRUI_toggleClasses([tableCell])
                 cell.onclick = function() {
                     this.SRUI_remove()
                 }
@@ -113,14 +118,14 @@ body = BODY(
     )
     .SRUI_setMargination(stdMargination)
     .SRUI_applyStyle({
-        padding: std_padding,
+        padding: stdPadding,
     }),
     FOOTER(
         TEXT("This is a footer")
     )
     .SRUI_applyStyle({
         position: "fixed",
-        padding: std_padding,
+        padding: stdPadding,
         backgroundColor: "Red"
     })
 )

@@ -13,4 +13,5 @@ The margination of a node controls the marginTop and marginBottom values of its 
 # common gotchas
 1. To specify an event handler, you have to use the "function" keyword. If you use an arrow function instead, your code will probably not work.
 2. Keep in mind that TEXT objects cannot respond to click events. Use a PARAGRAPH object instead.
-3. The SRUI_appendChild method works OK, but the SRUI_prependChild hasn't been implemented properly.
+3. The SRUI_forEachChild and SRUI_forEachGrandchild methods only apply to nodes that currently exist. If you want your code to be called when additional children and/or grandchildren are created, be sure to use SRUI_forEachChildForever and SRUI_forEachGrandchildForever instead.
+4. The SRUI_appendChild method works OK, but the SRUI_prependChild hasn't been implemented properly.
