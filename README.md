@@ -11,5 +11,5 @@ SRUI is heavily JavaScript-oriented. Hence, although the file example.html illus
 The margination of a node controls the marginTop and marginBottom values of its child nodes. Calling the SRUI_setMargination method will automatically override these, and this process proceeds recursively through your tree. This process can be blocked by setting the SRUI_blockMargination property to true on the blocking node. There's two main reasons you might want to do this process. Firstly, if you're creating a component in which you want to control the topMargin and bottomMargin of the child nodes manually, you'll once again need to block this process. Secondly, if your nodes are arranged horizontally and not just vertically, you'll need to block the margination process, or things will end up looking very strange. Note that the HORIZONTAL_DIV component automatically carries the SRUI_blockMargination=true attribute.
 
 # common gotchas
-1. To specify an event handler, you have to use the "function" keyword. If you use an arrow function instead, or your code will probably not work.
+1. To specify an event handler, you have to use the "function" keyword. If you use an arrow function instead, your code will probably not work.
 2. Keep in mind that TEXT objects cannot respond to click events. Use a PARAGRAPH object instead.
