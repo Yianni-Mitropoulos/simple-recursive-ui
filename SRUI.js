@@ -110,13 +110,49 @@ function SRUI_new_component(isLeaf, f) {
             return component
         }
 
-        /* Attach a method for traversing the child nodes of the component we're creating */
+        /* Methods for operating on child nodes */
         component.SRUI_forEachChild = (f) => {
             let F = f.bind(component)
-            component.SRUI_children.forEach(F)
+            component.SRUI_children.forEach((child) => {
+                F(child)
+            })
             return component
         }
 
+        component.SRUI_forEachChildHereafter = (f) => {
+            let F = f.bind(component)
+            component.SRUI_onNewChild = F
+            return component
+        }
+
+        component.SRUI_forEachChildForever = (f) => {
+            component.SRUI_forEachChild(f)
+            component.SRUI_forEachChildHereafter(f)
+            return component
+        }
+
+        /* Methods for operating on grandchildren */
+        component.SRUI_forEachGrandchild = (f) => {
+            let F = f.bind(component)
+            component.SRUI_children.forEach((child) => {
+                child.SRUI_children.forEach((grandchild) => {
+                    F(grandchild)
+                })
+            })
+            return component
+        }
+
+        component.SRUI_forEachGrandchildHereafter = (f) => {
+            component.SRUI_onNewGrandchild = f
+            return component
+        }
+
+        component.SRUI_forEachGrandchildForever = (f) => {
+            component.SRUI_forEachGrandchild(f)
+            component.SRUI_forEachGrandchildHereafter(f)
+            return component
+        }
+        
         /* Attach a method for iterating over undernodes */
         component.SRUI_forEachUndernode = (f) => {
             let F = f.bind(component)
@@ -130,14 +166,22 @@ function SRUI_new_component(isLeaf, f) {
             }
             return component
         }
-        
+
+        /* Allow the setting of state */
+        component.SRUI_setVariable = (key, value) => {
+            component.SRUI_variables[key] = value
+            return component
+        }
+
         /* Specify some starting values */
         component.SRUI_parent = undefined
         component.SRUI_children = []
         component.SRUI_properUndernodes = {}
         component.SRUI_name = undefined
         component.SRUI_margination = undefined
-        component.SRUI_state = {} // This line create spaces for arbitrary data that the user of library may want to store
+        component.SRUI_variables = {} // This line create spaces for arbitrary data that the user of library may want to store
+        component.SRUI_onNewChild = (child) => {}
+        component.SRUI_onNewGrandchild = (grandchild) => {}
 
         /* If the component we're constructing is a leaf, we're done at this point */
         if (isLeaf) {
@@ -181,24 +225,9 @@ function SRUI_new_component(isLeaf, f) {
                     }
                 }
             })
-            /*
-            if (component.nodeName == 'BODY') {
-                console.log(component)
-                console.log(retval)
-            }
-            */
             return retval
         }
-        
-        /* Attach a method for traversing the grandchild nodes of the component we're creating */
-        component.SRUI_forEachGrandchild = (f) => {
-            let F = f.bind(component)
-            component.SRUI_forEachChild((child) => {
-                child.SRUI_forEachChild(F)
-            })
-            return component
-        }
-        
+                
         /* Attach a method for attaching new (proper) undernodes */
         component.SRUI_attachUndernode = (newUndernode) => {
             let undernodeList = component.SRUI_properUndernodes[newUndernode.SRUI_name]
@@ -226,6 +255,11 @@ function SRUI_new_component(isLeaf, f) {
                 let margination = component.SRUI_getMargination()
                 if (margination !== undefined) {
                     child.style.marginTop = margination
+                }
+                /* Call onNewChild and onNewGrandchild handlers */
+                component.SRUI_onNewChild(child)
+                if (component.SRUI_parent !== undefined) {
+                    component.SRUI_parent.SRUI_onNewGrandchild(child)
                 }
                 /* Append the child to the relevant part of the DOM */
                 component.append(child)

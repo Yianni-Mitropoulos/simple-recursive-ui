@@ -70,17 +70,23 @@ body = BODY(
             PARAGRAPH(TEXT("And here's a button: ")),
             BUTTON("I'm a button")
                 .SRUI_addEventListener('click', function() {
-                    let output_field = this.SRUI_getNearestNode('outputField')
-                    output_field.SRUI_appendChild(
+                    let outputField = this.SRUI_getNearestNode('outputField')
+                    outputField.SRUI_appendChild(
                         PARAGRAPH(
-                            TEXT("You clicked the button!")
+                            TEXT(`You've clicked the button! Count is ${outputField.SRUI_variables['count']}. `),
+                            BUTTON('Delete Line')
+                            .SRUI_addEventListener('click', function() {
+                                this.SRUI_parent.remove()
+                            })
                         )
                     )
+                    outputField.SRUI_variables['count'] += 1
                 }),
             BREAK(),
         )
         .SRUI_setName('outputField')
-        .SRUI_setMargination(stdMargination),
+        .SRUI_setMargination(stdMargination)
+        .SRUI_setVariable('count', 0),
         VERTICAL_DIV(
             PARAGRAPH(TEXT("Finally, a table for you. Try clicking on the elements!")),
             TABLE(
@@ -96,7 +102,7 @@ body = BODY(
                 ),
             )
             .SRUI_applyStyle({textAlign: "center"})
-            .SRUI_forEachGrandchild((cell) => {
+            .SRUI_forEachGrandchildForever((cell) => {
                 cell.SRUI_applyStyle(cell_style)
                 cell.onclick = function() {
                     this.SRUI_remove()
