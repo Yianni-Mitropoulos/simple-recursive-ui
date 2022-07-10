@@ -204,7 +204,7 @@ function SRUI_new_component(isLeaf, f) {
             }
             let flag = false
             component.SRUI_forEachChild((child) => {
-                if (child.SRUI_inheritMargination) {
+                if (child.SRUI_blockMargination !== true) {
                     child.SRUI_applyMargination(margination)
                 }
                 if (flag) {
@@ -329,10 +329,10 @@ BUTTON = SRUI_new_component(true, (msg) => {
 BODY = SRUI_new_component(false, () => {
     let body = document.body
     return [body, function() {
-        console.log(body.SRUI_children[body.SRUI_children.length - 1].style.position === 'fixed')
         if (body.SRUI_children.length !== 0) {
             let last_child = body.SRUI_children[body.SRUI_children.length - 1]
             if (last_child.style.position === 'fixed') {
+                console.log("Included extra padding because the last child element of BODY has position: 'fixed'.")
                 body.style.paddingBottom = `${last_child.clientHeight}px`
             }
         }
@@ -346,13 +346,12 @@ PARAGRAPH = SRUI_new_component(false, () => {
 
 VERTICAL_DIV = SRUI_new_component(false, () => {
     let div = document.createElement('div')
-    div.SRUI_inheritMargination = true
     return [div, () => {}]
 })
 
 HORIZONTAL_DIV = SRUI_new_component(false, () => {
     let div = document.createElement('div')
-    div.SRUI_inheritMargination = false
+    div.SRUI_blockMargination = true
     return [div, () => {}]
 })
 
