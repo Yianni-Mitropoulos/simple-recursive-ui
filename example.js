@@ -1,8 +1,9 @@
 /* Define a combined TEXT and SLIDER component such that the text displays the current value of the slider */
 
 function PARAGRAPH_SLIDER(obj) {
-    let width = obj["width"]
-    let sliderWidth = width
+    let width = obj["width"] // Why is it that these can be the same
+    let sliderWidth = width  // and things still look reasonable?
+                             // CSS is so weird...
     return HORIZONTAL_DIV(...SIDE_BY_SIDE(
         PARAGRAPH(
             TEXT(obj["value"])
@@ -14,7 +15,7 @@ function PARAGRAPH_SLIDER(obj) {
             max: obj["max"]
         })
         .SRUI_applyStyle({
-            width: `${width}em`,
+            width: `${sliderWidth}em`,
         })
         .SRUI_addEventListener("input", function () {
             let slider_value = this.value

@@ -173,31 +173,6 @@ function SRUI_new_component(isLeaf, f) {
             return component
         }
 
-        /* Specify some starting values */
-        component.SRUI_parent = undefined
-        component.SRUI_children = []
-        component.SRUI_properUndernodes = {}
-        component.SRUI_name = undefined
-        component.SRUI_margination = undefined
-        component.SRUI_variables = {} // This line create spaces for arbitrary data that the user of library may want to store
-        component.SRUI_onNewChild = (child) => {}
-        component.SRUI_onNewGrandchild = (grandchild) => {}
-
-        /* If the component we're constructing is a leaf, we're done at this point */
-        if (isLeaf) {
-            let F = finalize.bind(component)
-            F()
-            return component
-        }
-        /* Otherwise... */
-
-        /* Attach methods for altering margination */
-        component.SRUI_setMargination = (margination) => {
-            component.SRUI_margination = margination
-            component.SRUI_applyMargination(margination)
-            return component
-        }
-
         component.SRUI_applyMargination = (margination) => {
             if (margination === undefined) {
                 margination = component.SRUI_getMargination()
@@ -214,6 +189,30 @@ function SRUI_new_component(isLeaf, f) {
             })
         }
 
+        /* Specify some starting values */
+        component.SRUI_parent = undefined
+        component.SRUI_children = []
+        component.SRUI_properUndernodes = {}
+        component.SRUI_name = undefined
+        component.SRUI_margination = undefined
+        component.SRUI_onNewChild      = (child) => {}
+        component.SRUI_onNewGrandchild = (grandchild) => {}
+        component.SRUI_variables = {} // This line create spaces for arbitrary data that the user of library may want to store
+
+        /* If the component we're constructing is a leaf, we're done at this point */
+        if (isLeaf) {
+            let F = finalize.bind(component)
+            F()
+            return component
+        }
+        /* Otherwise... */
+
+        /* Attach methods for altering margination */
+        component.SRUI_setMargination = (margination) => {
+            component.SRUI_margination = margination
+            component.SRUI_applyMargination(margination)
+            return component
+        }
 
         /* Attach a component for recursively getting margination */
         component.SRUI_getMargination = () => {
@@ -330,6 +329,11 @@ BODY = SRUI_new_component(false, () => {
     let body = document.body
     return [body, function() {
         if (body.SRUI_children.length !== 0) {
+            let first_child = body.SRUI_children[0]
+            if (first_child.style.position === 'fixed') {
+                console.log("Included extra padding because the first child element of BODY has position: 'fixed'.")
+                body.style.paddingTop = `${first_child.clientHeight}px`
+            }
             let last_child = body.SRUI_children[body.SRUI_children.length - 1]
             if (last_child.style.position === 'fixed') {
                 console.log("Included extra padding because the last child element of BODY has position: 'fixed'.")
