@@ -147,21 +147,29 @@ function SRUI_new_component(isLeaf, f) {
         }
         /* Otherwise... */
 
-        /* Attach a method for altering margination */
+        /* Attach methods for altering margination */
         component.SRUI_setMargination = (margination) => {
             component.SRUI_margination = margination
+            component.SRUI_applyMargination(margination)
+            return component
+        }
+
+        component.SRUI_applyMargination = (margination) => {
+            if (margination === undefined) {
+                margination = component.SRUI_getMargination()
+            }
             let flag = false
             component.SRUI_forEachChild((child) => {
                 if (child.SRUI_inheritMargination) {
-                    child.SRUI_setMargination(margination)
+                    child.SRUI_applyMargination(margination)
                 }
                 if (flag) {
                     child.style.marginTop = margination
                 }
                 flag = true
             })
-            return component
         }
+
 
         /* Attach a component for recursively getting margination */
         component.SRUI_getMargination = () => {
