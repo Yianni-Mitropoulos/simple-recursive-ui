@@ -14,7 +14,7 @@ function SRUI_new_component(isLeaf, f) {
         /* Allow the user of the library to apply styles, classes, and attributes to the element */
         component.SRUI_applyStyle = (style) => {
             Object.entries(style).forEach(([key, value]) => {
-                component.style[key] = value
+                component.style[deCapitalize(key)] = value
             })
             return component
         }
@@ -424,19 +424,62 @@ SIDE_BY_SIDE = (left, right) => {
 
 /* Define CSS functionality */
 
+function isCapital(char){
+    return char.charCodeAt() >= 65 && char.charCodeAt() <= 90;
+}
+
+function deCapitalize(word) {
+    return word.charAt(0).toLowerCase() + word.slice(1);
+}
+
+CSS_NAME_FROM_JS = (jsName) => {
+    let cssName = ""; // Not sure why this semicolon is necessary... but it totally is
+    [...jsName].forEach((char) => {
+        if (isCapital(char)) {
+            cssName += `-${char.toLowerCase()}`
+        } else {
+            cssName += char
+        }
+    })
+    return cssName
+}
+
+CSS_NAME_TO_JS = (cssName) => {
+    return cssName.split('-').map((word) => {
+        if (flag) {
+            return word[0].toUpperCase() + word.substring(1)
+        } else {
+            return word
+        }
+    }).join("")
+}
+
+CSS_FROM_OBJ = (obj) => {
+    let text = ""
+    Object.entries(obj).forEach(([key, value]) => {
+        /* Build cssKey */
+        let cssKey = CSS_NAME_FROM_JS(key)
+        /* Build cssValue */
+        let cssValue = value
+        /* Append the key-value pair onto the text variable */
+        text += `${cssKey}: ${cssValue};`
+    })
+    return text
+}
+
 CSS_RAW = (text) => {
     let style = document.createElement('style')
     style.textContent = text
     document.head.appendChild(style)
 }
 
-CSS_CLASS = (str, pseudos) => {
+CSS_CLASS = (obj, pseudos) => {
     SRUI_cssClassCount += 1
     let className = `SRUI_${SRUI_cssClassCount}`
-    let text = `.${className} {${str}}`
+    let text = `.${className} {${CSS_FROM_OBJ(obj)}}`
     if (pseudos !== undefined) {
-        Object.entries(pseudos).forEach(([key, value]) => {
-            text += `\n.${className}:${key} {${value}}`
+        Object.entries(pseudos).forEach(([pseudo, obj]) => {
+            text += `\n.${className}:${pseudo} {${CSS_FROM_OBJ(obj)}}`
         })
     }
     CSS_RAW(text)

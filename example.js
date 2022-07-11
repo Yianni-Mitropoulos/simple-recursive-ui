@@ -33,16 +33,17 @@ function PARAGRAPH_SLIDER(obj) {
 stdPadding = "1em"
 stdMargination = "0.7em"
 
-tableCell = CSS_CLASS(
-    ` vertical-align: top;
-      background-color: Green;
-      padding: ${stdPadding};
-      transition: 0.16s;
-    `, {
-    hover:
-    ` background-color: Yellow;
-    `
-})
+tableCell = CSS_CLASS({
+        verticalAlign: "top",
+        backgroundColor: "Green",
+        padding: stdPadding,
+        transition: "0.16s"
+    }, {
+        hover: {
+            backgroundColor: "Yellow"
+        }
+    }
+)
 
 paragraphSliderWidth = 14; // em
 
