@@ -307,12 +307,17 @@ SLIDER = SRUI_new_component(true, (obj) => {
     return [
         document.createElement('input'),
         function() {
-            this.SRUI_setAttributes({
-                "type": "range",
-                "min":   obj["min"],
-                "value": obj["value"],
-                "max":   obj["max"],
-            })
+            this.SRUI_setAttributes(obj)
+            this.setAttribute("type", "range")
+        }
+    ]
+})
+
+IMAGE = SRUI_new_component(true, (obj) => {
+    return [
+        document.createElement("img"),
+        function() {
+            this.SRUI_setAttributes(obj)
         }
     ]
 })
@@ -325,12 +330,12 @@ BODY = SRUI_new_component(false, () => {
         if (body.SRUI_children.length !== 0) {
             let first_child = body.SRUI_children[0]
             if (first_child.style.position === 'fixed') {
-                console.log(`SRUI says: "I\'ve included extra padding because the first child element of BODY has fixed position."`)
+                console.log(`SRUI: "I\'ve included extra padding because the first child element of BODY has fixed position."`)
                 body.style.paddingTop = `${first_child.clientHeight}px`
             }
             let last_child = body.SRUI_children[body.SRUI_children.length - 1]
             if (last_child.style.position === 'fixed') {
-                console.log(`SRUI says: "I\'ve included extra padding because the first child element of BODY has fixed position."`)
+                console.log(`SRUI: "I\'ve included extra padding because the first child element of BODY has fixed position."`)
                 body.style.paddingBottom = `${last_child.clientHeight}px`
             }
         }

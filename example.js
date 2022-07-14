@@ -109,7 +109,7 @@ BODY(
         .SRUI_setMargination(stdMargination)
         .SRUI_setVariable('count', 0),
         DIV(
-            PARAGRAPH(TEXT("Finally, a table for you. Try clicking on the elements!")),
+            PARAGRAPH(TEXT("You can also make tables. Try clicking on the elements!")),
             TABLE(
                 TABLE_ROW(
                     TABLE_DATA_CELL(TEXT("1")),
@@ -129,7 +129,18 @@ BODY(
                     this.SRUI_remove()
                 }
             })
-        )
+        ),
+        PARAGRAPH(TEXT("And finally, a clickable image!")),
+        IMAGE({
+            src: "https://loremflickr.com/240/240",
+            alt: "A placeholder image to illustrate the library"
+        })
+        .SRUI_setVariable('count', 240)
+        .SRUI_addEventListener('click', function() {
+            let count = this.SRUI_variables['count']
+            this.SRUI_setVariable('count', count + 1)
+            this.src = `https://loremflickr.com/240/${count+1}`
+        }),
     )
     .SRUI_setMargination(stdMargination)
     .SRUI_applyStyle({
