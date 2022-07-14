@@ -34,7 +34,7 @@ function PARAGRAPH_SLIDER(obj) {
         .SRUI_applyStyle({float: "right"}),
 
         /* Clear the floats */
-        CLEAR_FLOATS()
+        CLEAR_BOTH()
 
     )
     .SRUI_applyStyle({

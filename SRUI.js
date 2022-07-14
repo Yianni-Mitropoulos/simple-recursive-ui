@@ -325,12 +325,12 @@ BODY = SRUI_new_component(false, () => {
         if (body.SRUI_children.length !== 0) {
             let first_child = body.SRUI_children[0]
             if (first_child.style.position === 'fixed') {
-                console.log("Included extra padding because the first child element of BODY has position: 'fixed'.")
+                console.log(`SRUI says: "I\'ve included extra padding because the first child element of BODY has fixed position."`)
                 body.style.paddingTop = `${first_child.clientHeight}px`
             }
             let last_child = body.SRUI_children[body.SRUI_children.length - 1]
             if (last_child.style.position === 'fixed') {
-                console.log("Included extra padding because the last child element of BODY has position: 'fixed'.")
+                console.log(`SRUI says: "I\'ve included extra padding because the first child element of BODY has fixed position."`)
                 body.style.paddingBottom = `${last_child.clientHeight}px`
             }
         }
@@ -413,7 +413,19 @@ FOOTER = SRUI_new_component(false, () => {
 
 /* Use this to achieve side by side functionality with floats */
 
-CLEAR_FLOATS = SRUI_new_component(true, () => {
+CLEAR_LEFT = SRUI_new_component(true, () => {
+    let div = document.createElement('div')
+    div.style.clear = "left"
+    return [div, () => {}]
+})
+
+CLEAR_RIGHT = SRUI_new_component(true, () => {
+    let div = document.createElement('div')
+    div.style.clear = "right"
+    return [div, () => {}]
+})
+
+CLEAR_BOTH = SRUI_new_component(true, () => {
     let div = document.createElement('div')
     div.style.clear = "both"
     return [div, () => {}]
@@ -483,10 +495,23 @@ CSS_CLASS = (obj, pseudos) => {
     return className
 }
 
+CSS_EVERYTHING = (obj) => {
+    let text = `*, *::before, *::after {${CSS_FROM_OBJ(obj)}}`
+    CSS_RAW(text)
+}
+
 /* Initialize */
 
 let SRUI_cssClassCount = 0
 
+CSS_EVERYTHING({
+    boxSizing: 'border-box',
+    margin: '0',
+    padding: '0',
+    borderWidth: '0'
+})
+/*
+)
 CSS_RAW(`
     *, *::before, *::after {
         box-sizing: border-box;
@@ -494,4 +519,4 @@ CSS_RAW(`
         padding: 0;
         border-width: 0;
     }
-`)
+`)*/
