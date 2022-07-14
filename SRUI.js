@@ -309,21 +309,15 @@ SLIDER = SRUI_new_component(true, (obj) => {
         function() {
             this.SRUI_setAttributes({
                 "type": "range",
-                "min": obj["min"],
+                "min":   obj["min"],
                 "value": obj["value"],
-                "max": obj["max"],
+                "max":   obj["max"],
             })
         }
     ]
 })
 
-BUTTON = SRUI_new_component(true, (msg) => {
-    let btn = document.createElement('button')
-    btn.textContent = msg
-    return [btn, () => {}]
-})
-
-/* Basic components that can be styled */
+/* Basic non-leaf components */
 
 BODY = SRUI_new_component(false, () => {
     let body = document.body
@@ -348,15 +342,28 @@ PARAGRAPH = SRUI_new_component(false, () => {
     return [p, () => {}]
 })
 
-VERTICAL_DIV = SRUI_new_component(false, () => {
+BUTTON = SRUI_new_component(false, () => {
+    let btn = document.createElement('button')
+    return [btn, () => {}]
+})
+
+DIV = SRUI_new_component(false, () => {
     let div = document.createElement('div')
     return [div, () => {}]
 })
 
-HORIZONTAL_DIV = SRUI_new_component(false, () => {
-    let div = document.createElement('div')
-    div.SRUI_blockMargination = true
-    return [div, () => {}]
+SPAN_BLOCK = SRUI_new_component(false, () => {
+    let span = document.createElement('span')
+    span.SRUI_blockMargination = true
+    span.style.display = 'block'
+    return [span, () => {}]
+})
+
+SPAN_INLINE = SRUI_new_component(false, () => {
+    let span = document.createElement('span')
+    span.SRUI_blockMargination = true
+    span.style.display = 'inline-block'
+    return [span, () => {}]
 })
 
 /* Tables */

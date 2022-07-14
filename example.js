@@ -4,10 +4,10 @@ function PARAGRAPH_SLIDER(obj) {
     let width = obj["width"] // Why is it that these can be the same
     let sliderWidth = width  // and things still look reasonable?
                              // CSS is so weird...
-    return HORIZONTAL_DIV(
+    return SPAN_BLOCK(
 
         /* Slider text */
-        HORIZONTAL_DIV(
+        SPAN_INLINE(
             PARAGRAPH(
                 TEXT(obj["value"])
                 .SRUI_setName("displayForSliderValue")
@@ -16,7 +16,7 @@ function PARAGRAPH_SLIDER(obj) {
         .SRUI_applyStyle({float: "left"}),
 
         /* The slider itself */
-        HORIZONTAL_DIV(
+        SPAN_INLINE(
             SLIDER({
                 min: obj["min"],
                 value: obj["value"],
@@ -72,7 +72,7 @@ BODY(
         padding: stdPadding,
         backgroundColor: "Blue",
     }),
-    VERTICAL_DIV(
+    DIV(
         PARAGRAPH(TEXT("Welcome, traveller!")),
         PARAGRAPH(TEXT("Here's some sliders for you: ")),
         PARAGRAPH_SLIDER({
@@ -87,15 +87,15 @@ BODY(
             max: 5,
             width: paragraphSliderWidth,
         }),
-        VERTICAL_DIV(
+        DIV(
             PARAGRAPH(TEXT("And here's a button: ")),
-            BUTTON("I'm a button")
+            BUTTON(TEXT("I'm a button"))
                 .SRUI_addEventListener('click', function() {
                     let outputField = this.SRUI_getNearestNode('outputField')
                     outputField.SRUI_appendChild(
                         PARAGRAPH(
                             TEXT(`You've clicked the button! Count is ${outputField.SRUI_variables['count']}. `),
-                            BUTTON('Delete Line')
+                            BUTTON(TEXT('Delete Line'))
                             .SRUI_addEventListener('click', function() {
                                 this.SRUI_parent.remove()
                             })
@@ -108,7 +108,7 @@ BODY(
         .SRUI_setName('outputField')
         .SRUI_setMargination(stdMargination)
         .SRUI_setVariable('count', 0),
-        VERTICAL_DIV(
+        DIV(
             PARAGRAPH(TEXT("Finally, a table for you. Try clicking on the elements!")),
             TABLE(
                 TABLE_ROW(
