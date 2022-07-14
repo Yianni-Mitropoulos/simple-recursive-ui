@@ -404,23 +404,13 @@ FOOTER = SRUI_new_component(false, () => {
     ]
 })
 
-/* Side by side functionality */
+/* Use this to achieve side by side functionality with floats */
 
 CLEAR_FLOATS = SRUI_new_component(true, () => {
     let div = document.createElement('div')
     div.style.clear = "both"
     return [div, () => {}]
 })
-
-SIDE_BY_SIDE = (left, right) => {
-    left.style.float  = "left"
-    right.style.float = "right"
-    return [
-        left,
-        right,
-        CLEAR_FLOATS()
-    ]
-}
 
 /* Define CSS functionality */
 
@@ -494,6 +484,7 @@ CSS_RAW(`
     *, *::before, *::after {
         box-sizing: border-box;
         margin: 0;
-        padding: 0
+        padding: 0;
+        border-width: 0;
     }
 `)

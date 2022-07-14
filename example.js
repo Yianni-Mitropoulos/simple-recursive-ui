@@ -4,25 +4,39 @@ function PARAGRAPH_SLIDER(obj) {
     let width = obj["width"] // Why is it that these can be the same
     let sliderWidth = width  // and things still look reasonable?
                              // CSS is so weird...
-    return HORIZONTAL_DIV(...SIDE_BY_SIDE(
-        PARAGRAPH(
-            TEXT(obj["value"])
-            .SRUI_setName("displayForSliderValue")
-        ),
-        SLIDER({
-            min: obj["min"],
-            value: obj["value"],
-            max: obj["max"]
-        })
-        .SRUI_applyStyle({
-            width: `${sliderWidth}em`,
-        })
-        .SRUI_addEventListener("input", function () {
-            let slider_value = this.value
-            let nearest_display_area = this.SRUI_getNearestNode('displayForSliderValue')
-            nearest_display_area.nodeValue = slider_value.toString()
-        }),
-    ))
+    return HORIZONTAL_DIV(
+
+        /* Slider text */
+        HORIZONTAL_DIV(
+            PARAGRAPH(
+                TEXT(obj["value"])
+                .SRUI_setName("displayForSliderValue")
+            )
+        )
+        .SRUI_applyStyle({float: "left"}),
+
+        /* The slider itself */
+        HORIZONTAL_DIV(
+            SLIDER({
+                min: obj["min"],
+                value: obj["value"],
+                max: obj["max"]
+            })
+            .SRUI_applyStyle({
+                width: `${sliderWidth}em`,
+            })
+            .SRUI_addEventListener("input", function () {
+                let slider_value = this.value
+                let nearest_display_area = this.SRUI_getNearestNode('displayForSliderValue')
+                nearest_display_area.nodeValue = slider_value.toString()
+            }),
+        )
+        .SRUI_applyStyle({float: "right"}),
+
+        /* Clear the floats */
+        CLEAR_FLOATS()
+
+    )
     .SRUI_applyStyle({
         width: `${width}em`
     })
