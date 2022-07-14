@@ -476,12 +476,16 @@ CSS_FROM_OBJ = (obj) => {
         /* Build cssValue */
         let cssValue = value
         /* Append the key-value pair onto the text variable */
-        text += `${cssKey}: ${cssValue};`
+        text += `${cssKey}: ${cssValue};\n\t`
     })
-    return text
+    return `{${text}}`
 }
 
-CSS_RAW = (text) => {
+CSS_FROM_PAIR = (text, obj) => {
+    return `${text} ${CSS_FROM_OBJ(obj)}`
+}
+
+CSS_APPLY = (text) => {
     let style = document.createElement('style')
     style.textContent = text
     document.head.appendChild(style)
@@ -490,38 +494,36 @@ CSS_RAW = (text) => {
 CSS_CLASS = (obj, pseudos) => {
     SRUI_cssClassCount += 1
     let className = `SRUI_${SRUI_cssClassCount}`
-    let text = `.${className} {${CSS_FROM_OBJ(obj)}}`
+    let css_code = CSS_FROM_PAIR(`.${className}`, obj)
     if (pseudos !== undefined) {
         Object.entries(pseudos).forEach(([pseudo, obj]) => {
-            text += `\n.${className}:${pseudo} {${CSS_FROM_OBJ(obj)}}`
+            css_code += CSS_FROM_PAIR(`\n.${className}:${pseudo}`, obj)
         })
     }
-    CSS_RAW(text)
+    console.log(css_code)
+    CSS_APPLY(css_code)
     return className
 }
 
-CSS_EVERYTHING = (obj) => {
-    let text = `*, *::before, *::after {${CSS_FROM_OBJ(obj)}}`
-    CSS_RAW(text)
+CSS_DO = (L) => {
+    let css_code = ""
+    L.forEach(([text, obj]) => {
+        css_code += CSS_FROM_PAIR(text, obj)
+    })
+    CSS_APPLY(css_code)
 }
+
+CSS_EVERYTHING = `*, *::before, *::after`
 
 /* Initialize */
 
 let SRUI_cssClassCount = 0
 
-CSS_EVERYTHING({
-    boxSizing: 'border-box',
-    margin: '0',
-    padding: '0',
-    borderWidth: '0'
-})
-/*
-)
-CSS_RAW(`
-    *, *::before, *::after {
-        box-sizing: border-box;
-        margin: 0;
-        padding: 0;
-        border-width: 0;
-    }
-`)*/
+CSS_DO([
+    [CSS_EVERYTHING, {
+        boxSizing: 'border-box',
+        margin: '0',
+        padding: '0',
+        borderWidth: '0'
+    }]
+])
