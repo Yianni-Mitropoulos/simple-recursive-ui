@@ -478,7 +478,7 @@ CSS_FROM_OBJ = (obj) => {
         /* Append the key-value pair onto the text variable */
         text += `\n\t${cssKey}: ${cssValue};`
     })
-    return `{${text}}`
+    return `{${text}\n}`
 }
 
 CSS_FROM_PAIR = (text, obj) => {
