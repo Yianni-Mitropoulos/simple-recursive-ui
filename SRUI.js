@@ -476,7 +476,7 @@ CSS_FROM_OBJ = (obj) => {
         /* Build cssValue */
         let cssValue = value
         /* Append the key-value pair onto the text variable */
-        text += `${cssKey}: ${cssValue};\n\t`
+        text += `\n\t${cssKey}: ${cssValue};`
     })
     return `{${text}}`
 }
