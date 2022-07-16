@@ -179,7 +179,7 @@ function SRUI_new_component(isLeaf, f) {
             }
             let flag = false
             component.SRUI_forEachChild((child) => {
-                if (child.SRUI_blockMargination !== true) {
+                if (child.SRUI_blockMargination !== true && child.SRUI_margination === undefined) {
                     child.SRUI_applyMargination(margination)
                 }
                 if (flag) {
