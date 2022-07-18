@@ -21,6 +21,7 @@ NewComponentType = (f, g) => {
             this.paddingBottom = 0
             this.paddingLeft = 0
             this.paddingRight = 0
+            this.alignment = 0
             g(this, ...args)
         }
         setPadding(padding) {
@@ -30,6 +31,9 @@ NewComponentType = (f, g) => {
             this.paddingRight  = padding
             this.setPixels('padding', padding)
             return this
+        }
+        setAlignment(alignment) {
+            this.alignment = alignment
         }
         setPixels(key, value) {
             this[key] = value
@@ -134,9 +138,10 @@ $verticalList = NewComponentType(
         component.gap = gap
         component.renderSpecial = () => {
             let height = component.paddingTop
-            let width  = 0
-            let flag   = false
+            let computed_width = 0
+            let flag = false
             component.children.forEach((child) => {
+                /* Height of parent element */
                 if (flag) {
                     height += gap
                 } else {
@@ -144,11 +149,13 @@ $verticalList = NewComponentType(
                 }
                 child.setPixels('top', height)
                 height += child.height
-                width = Math.max(width, child.width)
+                /* Width of parent element */
+                computed_width = Math.max(computed_width, child.width)
             })
             height += component.paddingBottom
-            if (component.widthIntended === undefined) {
-                component.setPixels('width', width)
+            if (component.widthIntended !== undefined) {
+                computed_width = computed_width + component.paddingLeft + component.paddingRight
+                component.setPixels('width', Math.max(computed_width, component.widthIntended))
             }
             component.setPixels('height', height)
         }
