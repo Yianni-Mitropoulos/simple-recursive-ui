@@ -1,15 +1,27 @@
 new Body()
 .append(
-    new VerticalList(500, 500) // width=500, padding=10, gap=10
+    new VerticalList(800, 10) // width=500, padding=10, gap=10
     .append(
-        new Paragraph(200, 200, "Hello world!")
+        new Paragraph("Hello world!")
+        .style({background: 'Blue'})
+        .setAlignment(0)
+    )
+    .append(
+        new Paragraph("How are you?")
         .style({background: 'Blue'})
         .setAlignment(0)
         .setPadding(20)
     )
+    .append(
+        new Paragraph("Lol...")
+        .style({background: 'Blue'})
+        .setAlignment(1)
+        .setOuterWidthTarget(500)
+    )
     .style({background: 'Green'})
     .setAlignment(1/2)
     .setPadding(20)
+    .rigidify()
 )
 .style({background: 'Red'})
 .setPadding(20)

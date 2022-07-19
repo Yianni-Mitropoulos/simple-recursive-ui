@@ -6,12 +6,11 @@ class Component {
         this.children = []
         this.onAppend = []
         /* Set up the default width */
-        this.outerWidthMax = Infinity
-        this.outerWidthTarget = 0
-        /* Set up the default padding */
-        this.setPadding(0)
-        /* Default alignment */
-        this.alignment = 0
+        this.alignment = 0 // Determines how it sits inside larger element
+        this.outerWidthTarget = Infinity // Determines target size
+        this.outerWidthMax    = Infinity // Determines maximum size
+        this.setPadding(0)               // Determines interior padding
+        this.gapBetweenChildren = 0      // Determines interior margins
         /* Finish constructing the Component by calling the relevant initialization function */
         this.init(...args)
     }
@@ -20,11 +19,23 @@ class Component {
         this.paddingBottom = padding
         this.paddingLeft   = padding
         this.paddingRight  = padding
+        this.HTML_element.style.padding = `${padding}px` // Mainly useful for leaf nodes
         return this
     }
-    setOuterWidth(max, target) {
-        this.outerWidthMax = max
+    setGapBetweenChildren(gap) {
+        this.gapBetweenChildren = gap
+        return this
+    }
+    setOuterWidthTarget(target) {
         this.outerWidthTarget = target
+        return this
+    }
+    setOuterWidthMax(max) {
+        this.outerWidthMax = max
+        return this
+    }
+    rigidify() {
+        this.outerWidthMax = this.outerWidthTarget
         return this
     }
     setAlignment(alignment) {
@@ -67,7 +78,7 @@ class Component {
         this.children.forEach((child) => {
             child.outerWidthAvailable = Math.min(
                 child.parent.innerWidthAvailable,
-                child.outerWidthMax,
+                child.outerWidthMax
             )
             child.innerWidthAvailable = child.outerWidthAvailable - child.paddingLeft - child.paddingRight
             child.beginInitialWidthComputation()
@@ -107,16 +118,31 @@ class VerticalList extends Component {
     cons() {
         return document.createElement('div')
     }
-    init(maxWidth, outerWidth) {
-        this.setOuterWidth(maxWidth, outerWidth)
+    init(outerWidthTarget, gapBetweenChildren) {
+        this.setOuterWidthTarget(outerWidthTarget)
+        this.setGapBetweenChildren(gapBetweenChildren)
     }
     rend() {
+        /* Align child nodes appropriately */
         this.children.forEach((child) => {
             let x = this.paddingLeft + (this.innerWidth - child.outerWidth)*child.alignment
             child.HTML_element.style.left = `${x}px`
         })
-        this.HTML_element.style.height = '500px'
-
+        let height = this.paddingTop
+        let flag = false
+        this.children.forEach((child) => {
+            /* Height of parent element */
+            if (flag) {
+                height += this.gapBetweenChildren
+            } else {
+                flag = true
+            }
+            child.HTML_element.style.top = `${height}px`
+            height += child.HTML_element.offsetHeight
+        })
+        /* Set the height of the current component */
+        height += this.paddingBottom
+        this.HTML_element.style.height = `${height}px`
     }
 }
 
@@ -124,20 +150,16 @@ class Body extends VerticalList {
     cons() {
         return document.body
     }
-    init() {
-        this.setOuterWidth(Infinity, Infinity)
-    }
+    init() {}
 }
 
 class Paragraph extends Component {
-    cons(maxWidth, outerWidth, msg) {
+    cons(msg) {
         let p = document.createElement('p')
         p.append(document.createTextNode(msg))
         return p
     }
-    init(maxWidth, outerWidth, msg) {
-        this.setOuterWidth(maxWidth, outerWidth)
-    }
+    init() {}
     rend() {}
 }
 
