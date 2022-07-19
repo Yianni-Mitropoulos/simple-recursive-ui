@@ -42,6 +42,10 @@ class Component {
         this.alignment = alignment
         return this
     }
+    addEventListener(eventName, handler) {
+        this.HTML_element.addEventListener(eventName, handler)
+        return this
+    }
     append(child) {
         this.HTML_element.append(child.HTML_element)
         this.children.push(child)
@@ -143,6 +147,40 @@ class VerticalList extends Component {
         /* Set the height of the current component */
         height += this.paddingBottom
         this.HTML_element.style.height = `${height}px`
+    }
+}
+
+class HorizontalList extends Component {
+    cons() {
+        return document.createElement('div')
+    }
+    init(outerWidthTarget, gapBetweenChildren) {
+        this.setOuterWidthTarget(outerWidthTarget)
+        this.setGapBetweenChildren(gapBetweenChildren)
+    }
+    rend() {
+        /* Set x values of children */
+        let innerHeight = 0
+        let x = this.paddingLeft
+        let flag = false
+        this.children.forEach((child) => {
+            if (flag) {
+                x += this.gapBetweenChildren
+            } else {
+                flag = true
+            }
+            innerHeight = Math.max(innerHeight, child.HTML_element.offsetHeight) // This is a bug waiting to happen, don't use child.offsetHeight here
+            child.HTML_element.style.left = `${x}px`
+            x += child.HTML_element.offsetWidth
+        })
+        /* Set height of the current element */
+        let outerHeight = innerHeight + this.paddingTop + this.paddingBottom
+        this.HTML_element.style.height = `${outerHeight}px`
+        /* Set y values of children */
+        this.children.forEach((child) => {
+            let y = this.paddingTop + (innerHeight - child.HTML_element.offsetHeight)*child.alignment
+            child.HTML_element.style.top = `${y}px`
+        })
     }
 }
 
