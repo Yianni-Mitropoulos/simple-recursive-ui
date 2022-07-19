@@ -1,185 +1,145 @@
 SMALL_TIME_INCREMENT = 0
 
-/*
-function is_component(possible_component) {
-    return (
-        possible_component !== undefined &&
-        possible_component.SRUI_component === true
-    )
-}
-let this.width = this.HTML_element.offsetWidth
-*/
-
-NewComponentType = (f, g) => {
-    class Component {
-        constructor(...args) {
-            this.SRUI_component = true
-            this.HTML_element = f(...args)
-            this.children = []
-            this.onAppend = []
-            this.paddingTop = 0
-            this.paddingBottom = 0
-            this.paddingLeft = 0
-            this.paddingRight = 0
-            this.alignment = 0
-            g(this, ...args)
-        }
-        setPadding(padding) {
-            this.paddingTop    = padding
-            this.paddingBottom = padding
-            this.paddingLeft   = padding
-            this.paddingRight  = padding
-            this.setPixels('padding', padding)
-            return this
-        }
-        setAlignment(alignment) {
-            this.alignment = alignment
-        }
-        setPixels(key, value) {
-            this[key] = value
-            this.HTML_element.style[key] = `${value}px`
-            return this
-        }
-        setPixelsIntended(key, value) {
-            this[key] = value
-            this[`${key}Intended`] = value
-            this.HTML_element.style[key] = `${value}px`
-            return this
-        }
-        getMinimumOuterWidth() {
-            let computedInnerWidth = 0
-            this.children.forEach((child) => {
-                computedInnerWidth = Math.max(computedInnerWidth, child.getMinimumOuterWidth())
-            })
-            let computedOuterWidth = computedInnerWidth + this.paddingLeft + this.paddingRight
-            return Math.max(computedOuterWidth, this.widthIntended)
-        }
-        propagate(width) {
-            if (width === undefined) {
-                width = window.innerWidth
-            }
-            if (this.widthIntended === undefined) {
-                this.setPixels('width',  width)
-            } else {
-                width = this.getMinimumOuterWidth()
-            }
-            width -= this.paddingLeft + this.paddingRight
-            this.children.forEach((child) => {
-                child.propagate(width)
-            })
-        }
-        render() {
-            this.children.forEach((child) => {
-                child.render()
-            })
-            this.width  = this.HTML_element.offsetWidth
-            this.height = this.HTML_element.offsetHeight
-            this.renderSpecial()
-        }
-        finish() {
-            let onWindowResize = () => {
-                this.propagate()
-                setTimeout(() => {
-                    this.render()
-                }, SMALL_TIME_INCREMENT)    
-            }
-            addEventListener('resize', onWindowResize)
-            onWindowResize()
-        }
-        append(child) {
-            this.HTML_element.append(child.HTML_element)
-            this.children.push(child)
-            this.onAppend.forEach((handler) => {
-                handler(child)
-            })
-            return this
-        }
-        style(obj) {
-            Object.entries(obj).forEach(([key, value]) => {
-                this.HTML_element.style[key] = value
-            })
-            return this
-        }
+class Component {
+    constructor(...args) {
+        this.HTML_element = this.cons(...args)
+        this.children = []
+        this.onAppend = []
+        /* Set up the default width */
+        this.outerWidthMax = Infinity
+        this.outerWidthTarget = 0
+        /* Set up the default padding */
+        this.setPadding(0)
+        /* Default alignment */
+        this.alignment = 0
+        /* Finish constructing the Component by calling the relevant initialization function */
+        this.init(...args)
     }
-    return Component
+    setPadding(padding) {
+        this.paddingTop    = padding
+        this.paddingBottom = padding
+        this.paddingLeft   = padding
+        this.paddingRight  = padding
+        return this
+    }
+    setOuterWidth(max, target) {
+        this.outerWidthMax = max
+        this.outerWidthTarget = target
+        return this
+    }
+    setAlignment(alignment) {
+        this.alignment = alignment
+        return this
+    }
+    append(child) {
+        this.HTML_element.append(child.HTML_element)
+        this.children.push(child)
+        child.parent = this
+        this.onAppend.forEach((handler) => {
+            handler(child)
+        })
+        return this
+    }
+    style(obj) {
+        Object.entries(obj).forEach(([key, value]) => {
+            this.HTML_element.style[key] = value
+        })
+        return this
+    }
+    finish() {
+        addEventListener('resize', this.render.bind(this))
+        this.render()
+    }
+    /* Private methods */
+    render() {
+        this.renderPart1()
+        setTimeout(() => {
+            this.renderPart2()
+        }, SMALL_TIME_INCREMENT)
+    }        
+    renderPart1() {
+        this.outerWidthAvailable = window.innerWidth
+        this.innerWidthAvailable = window.innerWidth - this.paddingLeft - this.paddingRight
+        this.beginInitialWidthComputation()
+        this.beginFinalWidthComputation()
+    }
+    beginInitialWidthComputation() {
+        this.children.forEach((child) => {
+            child.outerWidthAvailable = Math.min(
+                child.parent.innerWidthAvailable,
+                child.outerWidthMax,
+            )
+            child.innerWidthAvailable = child.outerWidthAvailable - child.paddingLeft - child.paddingRight
+            child.beginInitialWidthComputation()
+        })
+    }        
+    beginFinalWidthComputation() {
+        this.children.forEach((child) => {
+            child.beginFinalWidthComputation()
+        })
+        let L = this.children.map((child) => {
+            return Math.min(
+                child.outerWidthAvailable,
+                child.outerWidthTarget,
+            )
+        })
+        this.innerWidth = Math.max(...L,
+            Math.min(
+                this.innerWidthAvailable,
+                this.outerWidthTarget - this.paddingLeft - this.paddingRight
+            )
+        )
+        this.outerWidth = this.innerWidth + this.paddingLeft + this.paddingRight
+        // console.log(this)
+        // console.log(this.outerWidthAvailable, this.innerWidthAvailable, this.innerWidth, this.outerWidth)
+        // console.log(L)
+        this.HTML_element.style.width = `${this.outerWidth}px` // Communicate with web browser via CSS
+    }
+    renderPart2() {
+        this.children.forEach((child) => {
+            child.renderPart2()
+        })
+        this.rend() // Provided by the component type
+    }
 }
 
-/* Provide some basic component types */
+class VerticalList extends Component {
+    cons() {
+        return document.createElement('div')
+    }
+    init(maxWidth, outerWidth) {
+        this.setOuterWidth(maxWidth, outerWidth)
+    }
+    rend() {
+        this.children.forEach((child) => {
+            let x = this.paddingLeft + (this.innerWidth - child.outerWidth)*child.alignment
+            child.HTML_element.style.left = `${x}px`
+        })
+        this.HTML_element.style.height = '500px'
 
-$body = NewComponentType(
-    () => {
+    }
+}
+
+class Body extends VerticalList {
+    cons() {
         return document.body
-    },
-    (component) => {
-        component.renderSpecial = () => {}
-    },
-)
+    }
+    init() {
+        this.setOuterWidth(Infinity, Infinity)
+    }
+}
 
-/*
-$horizontalList = NewComponentType(
-    () => {
-        return document.createElement('div')
-    },
-    (component, height) => {
-        component.setHeight(height)
-        component.renderSpecial = () => {
-
-        }
-    },
-)
-*/
-
-$verticalList = NewComponentType(
-    () => {
-        return document.createElement('div')
-    },
-    (component, width, padding, gap) => {
-        component.setPixelsIntended('width', width)
-        component.setPadding(padding)
-        component.gap = gap
-        component.renderSpecial = () => {
-            let height = component.paddingTop
-            let flag = false
-            component.children.forEach((child) => {
-                /* Height of parent element */
-                if (flag) {
-                    height += component.gap
-                } else {
-                    flag = true
-                }
-                child.setPixels('top', height)
-                height += child.height
-            })
-            /* Set the height of the current component */
-            height += component.paddingBottom
-            component.setPixels('height', height)
-            /* If there's a minimum width, enforce it */
-            if (component.widthIntended !== undefined) {
-                component.setPixels('width', component.getMinimumOuterWidth())
-            }
-            /* Align child nodes */
-            let innerWidth = component.width - component.paddingLeft - component.paddingRight
-            component.children.forEach((child) => {
-                if (child.widthIntended !== undefined) {
-                    child.setPixels('left', component.paddingLeft + child.alignment*(innerWidth - child.width))
-                }
-            })
-        }
-    },
-)
-
-$paragraph = NewComponentType(
-    (msg, width) => {
-        // Create the paragraph and its text node
+class Paragraph extends Component {
+    cons(maxWidth, outerWidth, msg) {
         let p = document.createElement('p')
         p.append(document.createTextNode(msg))
         return p
-    },
-    (component, msg, width) => {
-        component.setPixelsIntended('width', width)
-        component.renderSpecial = () => {}
     }
-)
+    init(maxWidth, outerWidth, msg) {
+        this.setOuterWidth(maxWidth, outerWidth)
+    }
+    rend() {}
+}
 
 /* Define CSS functionality */
 
