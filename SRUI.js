@@ -46,6 +46,14 @@ NewComponentType = (f, g) => {
             this.HTML_element.style[key] = `${value}px`
             return this
         }
+        getMinimumOuterWidth() {
+            let computedInnerWidth = 0
+            this.children.forEach((child) => {
+                computedInnerWidth = Math.max(computedInnerWidth, child.getMinimumOuterWidth())
+            })
+            let computedOuterWidth = computedInnerWidth + this.paddingLeft + this.paddingRight
+            return Math.max(computedOuterWidth, this.widthIntended)
+        }
         propagate(width) {
             if (width === undefined) {
                 width = window.innerWidth
@@ -53,15 +61,8 @@ NewComponentType = (f, g) => {
             if (this.widthIntended === undefined) {
                 this.setPixels('width',  width)
             } else {
-                width = this.widthIntended
+                width = this.getMinimumOuterWidth()
             }
-            /*
-            if (this.heightIntended === undefined) {
-                this.setPixels('height',  height)
-            } else {
-                height = this.heightIntended
-            }
-            */
             width -= this.paddingLeft + this.paddingRight
             this.children.forEach((child) => {
                 child.propagate(width)
@@ -71,7 +72,7 @@ NewComponentType = (f, g) => {
             this.children.forEach((child) => {
                 child.render()
             })
-            this.width = this.HTML_element.offsetWidth
+            this.width  = this.HTML_element.offsetWidth
             this.height = this.HTML_element.offsetHeight
             this.renderSpecial()
         }
@@ -138,26 +139,31 @@ $verticalList = NewComponentType(
         component.gap = gap
         component.renderSpecial = () => {
             let height = component.paddingTop
-            let computed_width = 0
             let flag = false
             component.children.forEach((child) => {
                 /* Height of parent element */
                 if (flag) {
-                    height += gap
+                    height += component.gap
                 } else {
                     flag = true
                 }
                 child.setPixels('top', height)
                 height += child.height
-                /* Width of parent element */
-                computed_width = Math.max(computed_width, child.width)
             })
+            /* Set the height of the current component */
             height += component.paddingBottom
-            if (component.widthIntended !== undefined) {
-                computed_width = computed_width + component.paddingLeft + component.paddingRight
-                component.setPixels('width', Math.max(computed_width, component.widthIntended))
-            }
             component.setPixels('height', height)
+            /* If there's a minimum width, enforce it */
+            if (component.widthIntended !== undefined) {
+                component.setPixels('width', component.getMinimumOuterWidth())
+            }
+            /* Align child nodes */
+            let innerWidth = component.width - component.paddingLeft - component.paddingRight
+            component.children.forEach((child) => {
+                if (child.widthIntended !== undefined) {
+                    child.setPixels('left', component.paddingLeft + child.alignment*(innerWidth - child.width))
+                }
+            })
         }
     },
 )
@@ -260,9 +266,9 @@ let SRUI_cssClassCount = 0
 
 CSS_DO([
     [CSS_EVERYTHING, {
-        position: 'absolute',
+        position:  'absolute',
         boxSizing: 'border-box',
-        margin: '0',
+        margin:  '0',
         padding: '0',
         borderWidth: '0'
     }]

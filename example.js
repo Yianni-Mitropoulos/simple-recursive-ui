@@ -1,16 +1,29 @@
 new $body()
 .append(
-    new $verticalList(100, 10, 10) // width=500, padding=10, gap=10
+    /* First part */
+    new $verticalList(500, 10, 10) // width=500, padding=10, gap=10
     .append(
-        new $paragraph("Hello world!")
+        new $paragraph("Hello world!", undefined)
         .style({background: 'Blue'})
     )
     .append(
-        new $paragraph("Hello world! This is some text.")
+        new $paragraph("Hello world! This is some text.", 150)
         .style({background: 'Purple'})
     )
     .style({background: 'Green'})
-    .setPadding(10)
+    /* Second part */
+    .append(
+        new $verticalList(undefined, 10, 10) // width=500, padding=10, gap=10
+        .append(
+            new $paragraph("Hello world!")
+            .style({background: 'Blue'})
+        )
+        .append(
+            new $paragraph("Hello world! This is some text.", 150)
+            .style({background: 'Purple'})
+        )
+        .style({background: 'LightGreen'})
+    )
 )
 .style({background: 'Red'})
 .finish()
