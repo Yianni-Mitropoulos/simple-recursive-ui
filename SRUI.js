@@ -14,26 +14,24 @@ class Component {
         } else {
             var tagName = this.defaultTagName()
         }
-        /* Construct a corresponding HTML element */
-        if (tagName === 'body') {
+        /* Construct a corresponding HTML element, or else use the document.body element */
+        if (tagName !== 'body') {
+            this.HTML_element = document.createElement(tagName)
+        } else {
             this.HTML_element = document.body
-            window.SRUI_body = this
+            window.SRUI_bodyComponent = this // Set up a global variable for the end-user of the library
             addEventListener('resize',
                 this.renderDescendants.bind(this)
             )
             setTimeout(
                 () => this.renderDescendants(),
             SMALL_TIME_INCREMENT)
-        } else {
-            this.HTML_element = document.createElement(tagName)
         }
         /* Initialize variables */
         this.children = new Set()
         // this.onAppend = []
-        this.alignment = 0 // Determines how it sits inside larger element
-        this.outerWidthTarget  = Infinity // Determines target size
-        this.outerWidthMax     = Infinity // Determines maximum size
-        this.outerWidthMin     = 0 // Determines maximum size
+        this.setInnerWidth(0, Number.POSITIVE_INFINITY)
+        this.setAlignment(0) // Determines how it sits inside the parent element
         this.setPadding(12)
         this.setGapBetweenChildren(12)
         this.applyStyle({background: generateColor()})
@@ -45,19 +43,23 @@ class Component {
             } else {
                 try {
                     /* If it's an instruction, execute it */
-                    var opname     = argument[0]
-                    var inputValue = argument[1]
-                    this[opname](inputValue)
+                    var opname = argument[0]
+                    argument.shift()
+                    this[opname](...argument)
                 } catch {
-                    console.log(`Problem with [${opname}, ${inputValue}] on ${this}`)
+                    console.log(`Problem with [${opname}, ${argument}] on ${this}`)
                 }
             }
         })
     }
+    /* Basic methods */
+    do(f) {
+        f.bind(this)()
+    }
     append(child) {
         this.HTML_element.append(child.HTML_element)
-        this.children.add(child)
         child.parent = this
+        this.children.add(child)
         /*
         this.onAppend.forEach((handler) => {
             handler(child)
@@ -66,6 +68,23 @@ class Component {
     }
     addEventListener(eventName, handler) {
         this.HTML_element.addEventListener(eventName, handler)
+    }
+    /* Methods for adjusting instance variables */
+    setInnerWidthMinimum(w) {
+        this.innerWidthMinimum = w
+    }
+    setInnerWidthDesired(w) {
+        this.innerWidthDesired = w
+    }
+    setInnerWidth(w0, w1) {
+        if (w1 === undefined) {
+            w1 = w0
+        }
+        this.innerWidthMinimum = w0
+        this.innerWidthDesired = w1
+    }
+    setAlignment(alignment) {
+        this.alignment = alignment
     }
     setPadding(padding) {
         this.paddingTop    = padding
@@ -77,90 +96,130 @@ class Component {
     setGapBetweenChildren(gap) {
         this.gapBetweenChildren = gap
     }
-    setOuterWidthTarget(target) {
-        this.outerWidthTarget = target
-    }
-    setOuterWidthMax(max) {
-        this.outerWidthMax = max
-    }
-    setOuterWidthMin(min) {
-        this.outerWidthMin = min
-    }
-    setOuterWidth(value) {
-        this.outerWidthTarget = value
-        this.outerWidthMax    = value
-    }
-    setInnerHTML(msg) {
-        this.HTML_element.innerHTML = msg + '&nbsp;' // Prevents selections at the end of one paragraph from bleeding over into the next paragraph
-    }
-    setAlignment(alignment) {
-        this.alignment = alignment
-    }
     applyStyle(obj) {
         Object.entries(obj).forEach(([key, value]) => {
             this.HTML_element.style[key] = value
         })
         return this
     }
+    setInnerHTML(msg) {
+        this.HTML_element.innerHTML = msg + '&nbsp;' // Prevents selections at the end of one paragraph from bleeding over into the next paragraph
+    }
     /* Private methods */
     renderDescendants() {
-        console.log("Rendering...")
-        this.renderDescendantsPart1()
+        this.setInnerWidthDesired(window.innerWidth - this.paddingLeft - this.paddingRight) // this.HTML_element.clientWidth
+        this.computeWidths()
         setTimeout(() => {
-            this.renderDescendantsPart2()
+            this.computeEverythingElse()
         }, SMALL_TIME_INCREMENT)
-    }        
-    renderDescendantsPart1() {
-        this.outerWidthAvailable = Math.max(
-            this.outerWidthMin,
-            document.documentElement.clientWidth,
-        )
-        this.innerWidthAvailable = this.outerWidthAvailable - this.paddingLeft - this.paddingRight
-        this.beginInitialWidthComputation()
-        this.beginFinalWidthComputation()
     }
-    beginInitialWidthComputation() {
+    computeEverythingElse() {
         this.children.forEach((child) => {
-            child.outerWidthAvailable = Math.max(
-                child.outerWidthMin,
-                Math.min(
-                    child.parent.innerWidthAvailable,
-                    child.outerWidthMax
-                ),
-            )
-            child.innerWidthAvailable = child.outerWidthAvailable - child.paddingLeft - child.paddingRight
-            child.beginInitialWidthComputation()
-        })
-    }        
-    beginFinalWidthComputation() {
-        this.children.forEach((child) => {
-            child.beginFinalWidthComputation()
-        })
-        let L = this.children.map((child) => {
-            return Math.min(
-                child.outerWidthAvailable,
-                child.outerWidthTarget,
-            )
-        })
-        this.innerWidth = Math.max(...L,
-            // this.outerWidthMin - this.paddingLeft - this.paddingRight,
-            Math.min(
-                this.innerWidthAvailable,
-                this.outerWidthTarget - this.paddingLeft - this.paddingRight
-            )
-        )
-        this.outerWidth = this.innerWidth + this.paddingLeft + this.paddingRight
-        this.HTML_element.style.width = `${this.outerWidth}px` // Communicate with web browser via CSS
-    }
-    renderDescendantsPart2() {
-        this.children.forEach((child) => {
-            child.renderDescendantsPart2()
+            child.computeEverythingElse()
         })
         this.render() // Provided by the component type
     }
+    outerize(innerWidth) {return innerWidth + this.paddingLeft + this.paddingRight}
+    innerize(outerWidth) {return outerWidth - this.paddingLeft - this.paddingRight}
+    computeWidths() { // innerWidthActualComputation
+        this.computeWidths_initialize()
+        this.innerWidthActual = this.innerWidthMaximum
+        this.computeWidths_widenChildrenRecursively()
+    }
+    computeWidths_initialize() {
+        this.children.forEach((child) => child.computeWidths_initialize())
+        this.innerWidthActual  = Math.max(this.innerWidthMinimum, this.widthConsumedByChildren())
+        this.innerWidthMaximum = Math.max(this.innerWidthActual,  this.innerWidthDesired)    
+    }
+    computeWidths_widenChildrenRecursively() {
+        this.HTML_element.style.width = `${this.outerize(this.innerWidthActual)}px`
+        this.widenChildren()
+        this.children.forEach((child) => child.computeWidths_widenChildrenRecursively())
+    }
 }
 
-class VerticalList extends Component {
+class VerticalComponent extends Component {
+    widthConsumedByChildren() {
+        let runningMax = 0
+        this.children.forEach((child) => {
+            runningMax = Math.max(runningMax, child.outerize(child.innerWidthActual))
+        })
+        return runningMax
+    }
+    widenChildren() {
+        this.children.forEach((child) => {
+            child.innerWidthActual = Math.max(
+                child.innerWidthActual,
+                Math.min(
+                    child.innerize(this.innerWidthActual),
+                    child.innerWidthDesired
+                )
+            )
+        })
+    }
+}
+
+class LeafComponent extends Component {
+    widthConsumedByChildren() {return 0}
+    widenChildren() {}
+}
+
+class HorizontalComponent extends Component {
+    widthConsumedByChildren() {
+        let runningSum = 0
+        let flag = false
+        this.children.forEach((child) => {
+            runningSum += child.outerize(child.innerWidthActual)
+            if (flag) {
+                runningSum += this.gapBetweenChildren
+            }
+            flag = true
+        })
+        return runningSum
+    }
+    widenChildren() {
+        let widthConsumedByChildren = this.widthConsumedByChildren()
+        let widenableChildren = new Set(this.children)
+        let flag = false
+        while (!flag) {
+            let dmin = Number.POSITIVE_INFINITY
+            widenableChildren.forEach((child) => {
+                let d = child.innerWidthMaximum - child.innerWidthActual
+                if (d > 0) {
+                    dmin = Math.min(dmin, d)
+                } else {
+                    widenableChildren.delete(child)
+                }
+            })
+            if (widenableChildren.size === 0) {
+                flag = true
+            } else {
+                let hypotheticalExtraWidth = dmin * widenableChildren.size
+                if (widthConsumedByChildren + hypotheticalExtraWidth <= this.innerWidthMaximum) {
+                    widenableChildren.forEach((child) => {
+                        child.innerWidthActual += dmin
+                    })
+                    widthConsumedByChildren += hypotheticalExtraWidth
+                } else {
+                    flag = true
+                    let reduced_dmin = Math.floor((this.innerWidthMaximum - widthConsumedByChildren)/widenableChildren.size)
+                    widenableChildren.forEach((child) => {
+                        child.innerWidthActual += reduced_dmin
+                    })
+                }    
+            }
+        }
+    }
+}
+
+class VerticalList extends VerticalComponent {
+    append(child) {
+        if (this.listOfChildren === undefined) {
+            this.listOfChildren = []
+        }
+        this.listOfChildren.push(child)
+        super.append(child)
+    }
     defaultTagName() {return 'div'}
     render() {
         /* Align child nodes appropriately */
@@ -170,7 +229,7 @@ class VerticalList extends Component {
         })
         let height = this.paddingTop
         let flag = false
-        this.children.forEach((child) => {
+        this.listOfChildren.forEach((child) => {
             /* Height of parent element */
             if (flag) {
                 height += this.gapBetweenChildren
@@ -186,14 +245,21 @@ class VerticalList extends Component {
     }
 }
 
-class HorizontalList extends Component {
+class HorizontalList extends HorizontalComponent {
+    append(child) {
+        if (this.listOfChildren === undefined) {
+            this.listOfChildren = []
+        }
+        this.listOfChildren.push(child)
+        super.append(child)
+    }
     defaultTagName() {return 'span'}
     render() {
         /* Set x values of children */
         let innerHeight = 0
         let x = this.paddingLeft
         let flag = false
-        this.children.forEach((child) => {
+        this.listOfChildren.forEach((child) => {
             if (flag) {
                 x += this.gapBetweenChildren
             } else {
@@ -214,7 +280,7 @@ class HorizontalList extends Component {
     }
 }
 
-class Paragraph extends Component {
+class Paragraph extends LeafComponent {
     defaultTagName() {return 'p'}
     render() {}
 }
