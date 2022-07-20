@@ -105,12 +105,12 @@ class Component {
     /* Private methods */
     renderDescendants() {
         console.log("Rendering...")
-        this.renderPart1()
+        this.renderDescendantsPart1()
         setTimeout(() => {
-            this.renderPart2()
+            this.renderDescendantsPart2()
         }, SMALL_TIME_INCREMENT)
     }        
-    renderPart1() {
+    renderDescendantsPart1() {
         this.outerWidthAvailable = Math.max(
             this.outerWidthMin,
             document.documentElement.clientWidth,
@@ -152,17 +152,17 @@ class Component {
         this.outerWidth = this.innerWidth + this.paddingLeft + this.paddingRight
         this.HTML_element.style.width = `${this.outerWidth}px` // Communicate with web browser via CSS
     }
-    renderPart2() {
+    renderDescendantsPart2() {
         this.children.forEach((child) => {
-            child.renderPart2()
+            child.renderDescendantsPart2()
         })
-        this.rend() // Provided by the component type
+        this.render() // Provided by the component type
     }
 }
 
 class VerticalList extends Component {
     defaultTagName() {return 'div'}
-    rend() {
+    render() {
         /* Align child nodes appropriately */
         this.children.forEach((child) => {
             let x = this.paddingLeft + (this.innerWidth - child.outerWidth)*child.alignment
@@ -188,7 +188,7 @@ class VerticalList extends Component {
 
 class HorizontalList extends Component {
     defaultTagName() {return 'span'}
-    rend() {
+    render() {
         /* Set x values of children */
         let innerHeight = 0
         let x = this.paddingLeft
@@ -216,7 +216,7 @@ class HorizontalList extends Component {
 
 class Paragraph extends Component {
     defaultTagName() {return 'p'}
-    rend() {}
+    render() {}
 }
 
 /* Define CSS functionality */
