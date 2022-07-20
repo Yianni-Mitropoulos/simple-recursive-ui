@@ -28,7 +28,7 @@ class Component {
             this.HTML_element = document.createElement(tagName)
         }
         /* Initialize variables */
-        this.children = []
+        this.children = new Set()
         // this.onAppend = []
         this.alignment = 0 // Determines how it sits inside larger element
         this.outerWidthTarget  = Infinity // Determines target size
@@ -56,7 +56,7 @@ class Component {
     }
     append(child) {
         this.HTML_element.append(child.HTML_element)
-        this.children.push(child)
+        this.children.add(child)
         child.parent = this
         /*
         this.onAppend.forEach((handler) => {
