@@ -9,19 +9,19 @@ class Widle {
     }
     outerize(innerWidth) {return innerWidth}
     innerize(outerWidth) {return outerWidth}
-    IWAC() { // innerWidthActualComputation
-        this.IWAC_initialize()
+    computeWidths() { // innerWidthActualComputation
+        this.computeWidths_initialize()
         this.innerWidthActual = this.innerWidthMaximum
-        this.IWAC_widenChildrenRecursively()
+        this.computeWidths_widenChildrenRecursively()
     }
-    IWAC_initialize() {
-        this.children.forEach((child) => child.IWAC_initialize())
+    computeWidths_initialize() {
+        this.children.forEach((child) => child.computeWidths_initialize())
         this.innerWidthActual  = Math.max(this.innerWidthMinimum, this.widthConsumedByChildren())
         this.innerWidthMaximum = Math.max(this.innerWidthActual,  this.innerWidthDesired)    
     }
-    IWAC_widenChildrenRecursively() {
+    computeWidths_widenChildrenRecursively() {
         this.widenChildren()
-        this.children.forEach((child) => child.IWAC_widenChildrenRecursively())
+        this.children.forEach((child) => child.computeWidths_widenChildrenRecursively())
     }
 }
 
@@ -94,5 +94,5 @@ x = new Hoz(100, 150, [
     new Hoz(60, 70, [])
 ])
 
-x.IWAC()
+x.computeWidths()
 console.log(x)
