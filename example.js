@@ -1,89 +1,30 @@
-new Body()
-.append(
-    new VerticalList(800, 10) // width=500, padding=10, gap=10
-    .append(
-        new Paragraph("Hello world!")
-        .style({background: 'Blue'})
-        .setAlignment(0)
-    )
-    .append(
-        new Paragraph("How are you?")
-        .style({background: 'Blue'})
-        .setAlignment(0)
-        .setPadding(20)
-    )
-    .append(
-        new Paragraph("Lol...")
-        .style({background: 'Blue'})
-        .setAlignment(1)
-        .setOuterWidthTarget(500)
-    )
-    .append(
-        new HorizontalList(800, 10)
-        .append(
-            new Paragraph("Lol...")
-            .style({background: 'Blue'})
-            .setOuterWidthTarget(100)
-            .setAlignment(1)
+new VerticalList(
+    ['tagName', 'body'],
+    ['setOuterWidthMin', 600],
+    new VerticalList(
+        ['setOuterWidth', 800],
+        // ['setOuterWidthMin', 600],
+        new Paragraph(
+            ['setInnerHTML', 'Hello, world!'],
+        ),
+        new Paragraph(
+            ['setInnerHTML', 'How are you?'],
+            ['setOuterWidth', 400],
+            ['setAlignment',  1/2],
         )
-        .append(
-            new Paragraph("Here's a decent amount of text...")
-            .style({background: 'Blue'})
-            .setOuterWidthTarget(100)
-            .addEventListener('click', () => {
-                alert("This is an alert")
-            })
+    ),
+    new HorizontalList(
+        ['setOuterWidth', 800],
+        // ['setOuterWidthMin', 600],
+        ['setAlignment', 0.5],
+        new Paragraph(
+            ['setInnerHTML', 'Hello, world!'],
+            ['setOuterWidth', 100]
+        ),
+        new Paragraph(
+            ['setInnerHTML', 'How are you?'],
+            ['setOuterWidth', 100],
+            ['setAlignment', 1]
         )
-        .style({background: 'LightBlue'})
-        .setAlignment(1/2)
-        .setPadding(20)
-        .rigidify()    
-    )    
-    .style({background: 'Green'})
-    .setAlignment(1/2)
-    .setPadding(20)
-    .rigidify()
+    ),
 )
-.append(
-    new HorizontalList(800, 10)
-    .append(
-        new Paragraph("Lol...")
-        .style({background: 'Blue'})
-        .setOuterWidthTarget(100)
-        .setAlignment(1)
-    )
-    .append(
-        new Paragraph("Here's a decent amount of text...")
-        .style({background: 'Blue'})
-        .setOuterWidthTarget(100)
-        .addEventListener('click', () => {
-            alert("This is an alert")
-        })
-    )
-    .style({background: 'Green'})
-    .setAlignment(1/2)
-    .setPadding(20)
-    .rigidify()    
-)
-.style({background: 'Red'})
-.setPadding(20)
-.setGapBetweenChildren(20)
-.finish()
-
-    /*
-    .append(
-        new $paragraph("Hello world! This is some text.")
-        .style({background: 'Purple'})
-    )
-    .append(
-        new $verticalList() // width=500, padding=10, gap=10
-        .append(
-            new $paragraph("Hello world!")
-            .style({background: 'Blue'})
-        )
-        .append(
-            new $paragraph("Hello world! This is some text.")
-            .style({background: 'Purple'})
-        )
-        .style({background: 'LightGreen'})
-    )*/

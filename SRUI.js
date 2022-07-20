@@ -1,18 +1,71 @@
 SMALL_TIME_INCREMENT = 0
 
+/* Following function is by kigiri and Redoman. Source: https://stackoverflow.com/a/25873123 */
+function generateColor() {
+    return 'hsla(' + Math.floor(Math.random()*360) + ', 100%, 70%, 1)'
+}
+
 class Component {
     constructor(...args) {
-        this.HTML_element = this.cons(...args)
+        /* Get the tagName */
+        if (args.length !== 0 && args[0][0] === 'tagName') {
+            var tagName = args[0][1]
+            args.shift()
+        } else {
+            var tagName = this.defaultTagName()
+        }
+        /* Construct a corresponding HTML element */
+        if (tagName === 'body') {
+            this.HTML_element = document.body
+            window.SRUI_body = this
+            addEventListener('resize',
+                this.renderDescendants.bind(this)
+            )
+            setTimeout(
+                () => this.renderDescendants(),
+            SMALL_TIME_INCREMENT)
+        } else {
+            this.HTML_element = document.createElement(tagName)
+        }
+        /* Initialize variables */
         this.children = []
-        this.onAppend = []
-        /* Set up the default width */
+        // this.onAppend = []
         this.alignment = 0 // Determines how it sits inside larger element
-        this.outerWidthTarget = Infinity // Determines target size
-        this.outerWidthMax    = Infinity // Determines maximum size
-        this.setPadding(0)               // Determines interior padding
-        this.gapBetweenChildren = 0      // Determines interior margins
-        /* Finish constructing the Component by calling the relevant initialization function */
-        this.init(...args)
+        this.outerWidthTarget  = Infinity // Determines target size
+        this.outerWidthMax     = Infinity // Determines maximum size
+        this.outerWidthMin     = 0 // Determines maximum size
+        this.setPadding(12)
+        this.setGapBetweenChildren(12)
+        this.applyStyle({background: generateColor()})
+        /* Execute each argument as if it were a function */
+        args.forEach((argument) => {
+            console.log(argument)
+            if (argument instanceof Component) {
+                this.append(argument)
+            } else {
+                try {
+                    /* If it's an instruction, execute it */
+                    var opname     = argument[0]
+                    var inputValue = argument[1]
+                    this[opname](inputValue)
+                } catch {
+                    console.log(`Problem with [${opname}, ${inputValue}] on ${this}`)
+                }
+            }
+        })
+    }
+    append(child) {
+        this.HTML_element.append(child.HTML_element)
+        this.children.push(child)
+        child.parent = this
+        /*
+        this.onAppend.forEach((handler) => {
+            handler(child)
+        })
+        */
+    }
+    addEventListener(eventName, handler) {
+        this.HTML_element.addEventListener(eventName, handler)
     }
     setPadding(padding) {
         this.paddingTop    = padding
@@ -20,69 +73,60 @@ class Component {
         this.paddingLeft   = padding
         this.paddingRight  = padding
         this.HTML_element.style.padding = `${padding}px` // Mainly useful for leaf nodes
-        return this
     }
     setGapBetweenChildren(gap) {
         this.gapBetweenChildren = gap
-        return this
     }
     setOuterWidthTarget(target) {
         this.outerWidthTarget = target
-        return this
     }
     setOuterWidthMax(max) {
         this.outerWidthMax = max
-        return this
     }
-    rigidify() {
-        this.outerWidthMax = this.outerWidthTarget
-        return this
+    setOuterWidthMin(min) {
+        this.outerWidthMin = min
+    }
+    setOuterWidth(value) {
+        this.outerWidthTarget = value
+        this.outerWidthMax    = value
+    }
+    setInnerHTML(msg) {
+        this.HTML_element.innerHTML = msg + '&nbsp;' // Prevents selections at the end of one paragraph from bleeding over into the next paragraph
     }
     setAlignment(alignment) {
         this.alignment = alignment
-        return this
     }
-    addEventListener(eventName, handler) {
-        this.HTML_element.addEventListener(eventName, handler)
-        return this
-    }
-    append(child) {
-        this.HTML_element.append(child.HTML_element)
-        this.children.push(child)
-        child.parent = this
-        this.onAppend.forEach((handler) => {
-            handler(child)
-        })
-        return this
-    }
-    style(obj) {
+    applyStyle(obj) {
         Object.entries(obj).forEach(([key, value]) => {
             this.HTML_element.style[key] = value
         })
         return this
     }
-    finish() {
-        addEventListener('resize', this.render.bind(this))
-        this.render()
-    }
     /* Private methods */
-    render() {
+    renderDescendants() {
+        console.log("Rendering...")
         this.renderPart1()
         setTimeout(() => {
             this.renderPart2()
         }, SMALL_TIME_INCREMENT)
     }        
     renderPart1() {
-        this.outerWidthAvailable = window.innerWidth
-        this.innerWidthAvailable = window.innerWidth - this.paddingLeft - this.paddingRight
+        this.outerWidthAvailable = Math.max(
+            this.outerWidthMin,
+            document.documentElement.clientWidth,
+        )
+        this.innerWidthAvailable = this.outerWidthAvailable - this.paddingLeft - this.paddingRight
         this.beginInitialWidthComputation()
         this.beginFinalWidthComputation()
     }
     beginInitialWidthComputation() {
         this.children.forEach((child) => {
-            child.outerWidthAvailable = Math.min(
-                child.parent.innerWidthAvailable,
-                child.outerWidthMax
+            child.outerWidthAvailable = Math.max(
+                child.outerWidthMin,
+                Math.min(
+                    child.parent.innerWidthAvailable,
+                    child.outerWidthMax
+                ),
             )
             child.innerWidthAvailable = child.outerWidthAvailable - child.paddingLeft - child.paddingRight
             child.beginInitialWidthComputation()
@@ -99,15 +143,13 @@ class Component {
             )
         })
         this.innerWidth = Math.max(...L,
+            // this.outerWidthMin - this.paddingLeft - this.paddingRight,
             Math.min(
                 this.innerWidthAvailable,
                 this.outerWidthTarget - this.paddingLeft - this.paddingRight
             )
         )
         this.outerWidth = this.innerWidth + this.paddingLeft + this.paddingRight
-        // console.log(this)
-        // console.log(this.outerWidthAvailable, this.innerWidthAvailable, this.innerWidth, this.outerWidth)
-        // console.log(L)
         this.HTML_element.style.width = `${this.outerWidth}px` // Communicate with web browser via CSS
     }
     renderPart2() {
@@ -119,13 +161,7 @@ class Component {
 }
 
 class VerticalList extends Component {
-    cons() {
-        return document.createElement('div')
-    }
-    init(outerWidthTarget, gapBetweenChildren) {
-        this.setOuterWidthTarget(outerWidthTarget)
-        this.setGapBetweenChildren(gapBetweenChildren)
-    }
+    defaultTagName() {return 'div'}
     rend() {
         /* Align child nodes appropriately */
         this.children.forEach((child) => {
@@ -151,13 +187,7 @@ class VerticalList extends Component {
 }
 
 class HorizontalList extends Component {
-    cons() {
-        return document.createElement('div')
-    }
-    init(outerWidthTarget, gapBetweenChildren) {
-        this.setOuterWidthTarget(outerWidthTarget)
-        this.setGapBetweenChildren(gapBetweenChildren)
-    }
+    defaultTagName() {return 'span'}
     rend() {
         /* Set x values of children */
         let innerHeight = 0
@@ -184,20 +214,8 @@ class HorizontalList extends Component {
     }
 }
 
-class Body extends VerticalList {
-    cons() {
-        return document.body
-    }
-    init() {}
-}
-
 class Paragraph extends Component {
-    cons(msg) {
-        let p = document.createElement('p')
-        p.append(document.createTextNode(msg))
-        return p
-    }
-    init() {}
+    defaultTagName() {return 'p'}
     rend() {}
 }
 
