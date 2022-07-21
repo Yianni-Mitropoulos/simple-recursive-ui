@@ -29,7 +29,7 @@ class Component {
         }
         /* Initialize variables */
         this.children = new Set()
-        // this.onAppend = []
+        this.onAppend = new Set()
         this.setInnerWidth(0, Number.POSITIVE_INFINITY)
         this.setInnerHeightMinimum(0)
         this.setAlignment(0) // Determines how it sits inside the parent element
@@ -46,7 +46,10 @@ class Component {
     SRUI_do(...args) {
         args.forEach((argument) => {
             // console.log(argument)
-            if (argument instanceof Component) {
+            if (argument === undefined) {
+                throw "UndefinedValueError: You're probably missing a comma somewhere. The regex \\][\\n\\r\\s]+\\[ may help you find the problem."
+            }
+            else if (argument instanceof Component) {
                 this.append(argument)
             } else if (typeof argument === 'string') {
                 this.setInnerHTML(argument)
@@ -54,24 +57,32 @@ class Component {
                 try {
                     /* If it's an instruction, execute it */
                     var opname = argument[0]
-                    argument.shift()
-                    this[opname](...argument)
+                    let remaining_params = argument.slice(1)
+                    this[opname](...remaining_params)
                 } catch {
                     console.log(`Problem with [${opname}, ${argument}] on ${this}`)
                 }
             }
         })
     }
+    JS_forEachChild(f) {
+        this.onAppend.add(f)
+        this.children.forEach(f)
+    }
+    SRUI_forEachChild(...args) {
+        let f = (child) => {child.SRUI_do(...args)}
+        this.onAppend.add(f)
+        this.children.forEach(f)
+    }
     append(child) {
         this.HTML_element.append(child.HTML_element)
         child.parent = this
         this.children.add(child)
-        /*
         this.onAppend.forEach((handler) => {
             handler(child)
         })
-        */
     }
+
     addEventListener(eventName, handler) {
         this.HTML_element.addEventListener(eventName, handler)
     }
@@ -126,6 +137,11 @@ class Component {
             this.HTML_element.style[key] = value
         })
         return this
+    }
+    toggleClass = (...classNames) => {
+        classNames.forEach((className) => {
+            this.HTML_element.classList.toggle(className)
+        })
     }
     setInnerHTML(msg) {
         this.HTML_element.innerHTML = msg + '&nbsp;' // Prevents selections at the end of one paragraph from bleeding over into the next paragraph

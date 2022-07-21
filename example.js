@@ -4,7 +4,7 @@ function BODY(...args) {
         ['setInnerWidthMinimum', 800],
         ['setPadding', 0],
         ['setGapBetweenChildren', 0],
-        ...args
+        ...args,
     )
 }
 
@@ -28,57 +28,52 @@ function NAVBAR(...args) {
         ['applyStyle', {background: 'Blue'}],
         new HorizontalList(
             ['toggleAppendSide'],
-            ...args,
             ['setAlignment', 1/2],
             ['setInnerWidth', 700, 800],
             ['setPadding', 0],
             ['setGapBetweenChildren', 0],
             ['applyStyle', {background: 'Blue'}],
+            ['SRUI_forEachChild',
+                ['toggleClass', button_CSSC],
+                ['addEventListener', 'click', () => {alert('foo')}],
+                ['setInnerWidth', 80, 100],
+            ],
+            ...args,
         )
     )
 }
 
 function MAIN(...args) {
     return new VerticalList(
-        ...args,
         ['setInnerWidth', 600, 700],
         ['setAlignment', 1/2],
         ['setPadding', 50],
         ['setGapBetweenChildren', 50],
+        ...args,
     )
 }
 
 function FOOTER(...args) {
     return new HorizontalList(
-        ...args,
         ['setInnerWidth', 600, 700],
         ['setAlignment', 1/2],
         ['setPadding', 50],
         ['setGapBetweenChildren', 50],
+        ...args,
     )
 }
+
+button_CSSC = CSS_CLASS({
+    cursor: 'pointer',
+    textAlign: 'center',
+})
 
 BODY(
     HERO_IMAGE(),
     NAVBAR(
-        new Button(
-            ['setInnerHTML', 'B1'],
-            ['applyStyle', {textAlign: 'center'}],
-            ['addEventListener', 'click', () => {alert('foo')}],
-            ['setInnerWidth', 80, 100]
-        ),
-        new Button(
-            ['setInnerHTML', 'B2'],
-            ['applyStyle', {textAlign: 'center'}],
-            ['addEventListener', 'click', () => {alert('foo')}],
-            ['setInnerWidth', 80, 100]
-        ),
-        new Button(
-            ['setInnerHTML', 'B3'],
-            ['applyStyle', {textAlign: 'center'}],
-            ['addEventListener', 'click', () => {alert('foo')}],
-            ['setInnerWidth', 80, 100]
-        ),
+        new Button('B1'),
+        new Button('B2'),
+        new Button('B3'),
     ),
     MAIN(
         new Text(
