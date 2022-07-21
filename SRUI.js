@@ -36,6 +36,9 @@ class Component {
         this.setPadding(12)
         this.setGapBetweenChildren(12)
         this.applyStyle({background: generateColor()})
+        /* Search variables */
+        this.properUndernodes = {}
+        this.SRUI_name = undefined
         /* Execute each argument as if it were a function */
         this.SRUI_do(...args)
     }
@@ -60,7 +63,7 @@ class Component {
                     let remaining_params = argument.slice(1)
                     this[opname](...remaining_params)
                 } catch {
-                    console.log(`Problem with [${opname}, ${argument}] on ${this}`)
+                    console.log(`Problem with [${argument}] on the following component:`, this)
                 }
             }
         })
@@ -74,15 +77,6 @@ class Component {
         this.onAppend.add(f)
         this.children.forEach(f)
     }
-    append(child) {
-        this.HTML_element.append(child.HTML_element)
-        child.parent = this
-        this.children.add(child)
-        this.onAppend.forEach((handler) => {
-            handler(child)
-        })
-    }
-
     addEventListener(eventName, handler) {
         this.HTML_element.addEventListener(eventName, handler)
     }
@@ -146,7 +140,14 @@ class Component {
     setInnerHTML(msg) {
         this.HTML_element.innerHTML = msg + '&nbsp;' // Prevents selections at the end of one paragraph from bleeding over into the next paragraph
     }
-    /* Private methods */
+
+    /* 
+     * Render methods
+     *
+     * Mostly new code
+     * 
+     */
+
     renderDescendants() {
         this.computeWidths()
         setTimeout(() => {
@@ -161,7 +162,6 @@ class Component {
     }
     outerize(innerWidth) {return innerWidth + this.paddingLeft + this.paddingRight}
     innerize(outerWidth) {return outerWidth - this.paddingLeft - this.paddingRight}
-    /* Compute widths */
     computeWidths() { // innerWidthActualComputation
         this.setInnerWidthDesired(this.innerize(window.innerWidth)) // this.HTML_element.clientWidth
         this.computeWidths_initialize()
@@ -185,6 +185,82 @@ class Component {
         let h = Math.max(this.innerHeightMinimum, this.HTML_element.offsetHeight)
         this.HTML_element.style.height = `${h}px`
     }
+
+    /* 
+     * Node-search methods
+     *
+     * (From original project.)
+     * 
+     */
+
+    append(child) {
+        this.HTML_element.append(child.HTML_element)
+        child.parent = this
+        this.children.add(child)
+        this.onAppend.forEach((handler) => {
+            handler(child)
+        })
+        /* Support node search */
+        this.forEachAncestor((ancestor) => {
+            child.forEachUndernode((undernode) => {
+                ancestor.attachUndernode(undernode)
+            })
+        })
+    }
+
+    /* Attach a method for traversing the ancestors of the component we're creating */
+    forEachAncestor(f) {
+        let F = f.bind(this)
+        let ancestor = this
+        while (ancestor !== undefined) {
+            F(ancestor)
+            ancestor = ancestor.parent
+        }
+    }
+
+    forEachUndernode(f) {
+        let F = f.bind(this)
+        Object.values(this.properUndernodes).forEach((value) => {
+            value.forEach((undernode) => {
+                F(undernode)
+            })
+        })
+        if (this.SRUI_name !== undefined) {
+            F(this)
+        }
+    }
+
+    attachUndernode(newUndernode) {
+        let undernodeList = this.properUndernodes[newUndernode.SRUI_name]
+        if (undernodeList === undefined) {
+            undernodeList = []
+            this.properUndernodes[newUndernode.SRUI_name] = undernodeList
+        }
+        undernodeList.push(newUndernode)
+    }
+
+    setName(name) {
+        this.SRUI_name = name
+    }
+
+    findNode(SRUI_name) {
+        let retval = undefined
+        this.forEachAncestor((ancestor) => {
+            if (retval !== undefined) {
+                return
+            }
+            let undernodeList = ancestor.properUndernodes[SRUI_name]
+            if (undernodeList !== undefined && undernodeList.length !== 0) {
+                if (undernodeList.length == 1) {
+                    retval = undernodeList[0]
+                } else {
+                    throw "There's more than one undernode with that name!"
+                }
+            }
+        })
+        return retval
+    }
+
 }
 
 class VerticalComponent extends Component {
