@@ -48,6 +48,8 @@ class Component {
             // console.log(argument)
             if (argument instanceof Component) {
                 this.append(argument)
+            } else if (typeof argument === 'string') {
+                this.setInnerHTML(argument)
             } else {
                 try {
                     /* If it's an instruction, execute it */
@@ -99,6 +101,22 @@ class Component {
         this.paddingLeft   = padding
         this.paddingRight  = padding
         this.HTML_element.style.padding = `${padding}px` // Mainly useful for leaf nodes
+    }
+    setPaddingTop(padding) {
+        this.paddingTop = padding
+        this.HTML_element.style.paddingTop = `${padding}px` // Mainly useful for leaf nodes
+    }
+    setPaddingLeft(padding) {
+        this.paddingLeft = padding
+        this.HTML_element.style.paddingLeft = `${padding}px` // Mainly useful for leaf nodes
+    }
+    setPaddingRight(padding) {
+        this.paddingRight = padding
+        this.HTML_element.style.paddingRight = `${padding}px` // Mainly useful for leaf nodes
+    }
+    setPaddingBottom(padding) {
+        this.paddingBottom = padding
+        this.HTML_element.style.paddingBottom = `${padding}px` // Mainly useful for leaf nodes
     }
     setGapBetweenChildren(gap) {
         this.gapBetweenChildren = gap
@@ -264,28 +282,57 @@ class VerticalList extends VerticalComponent {
 
 class HorizontalList extends HorizontalComponent {
     append(child) {
-        if (this.listOfChildren === undefined) {
-            this.listOfChildren = []
+        if (this.currentAppendSide === undefined) {
+            this.leftChildren  = []
+            this.rightChildren = []
+            this.currentAppendSide = this.leftChildren
+            this.otherAppendSide   = this.rightChildren
         }
-        this.listOfChildren.push(child)
+        this.currentAppendSide.push(child)
         super.append(child)
+    }
+    toggleAppendSide() {
+        if (this.currentAppendSide === undefined) {
+            this.leftChildren  = []
+            this.rightChildren = []
+            this.currentAppendSide = this.leftChildren
+            this.otherAppendSide   = this.rightChildren
+        }
+        let temp = this.currentAppendSide
+        this.currentAppendSide = this.otherAppendSide
+        this.otherAppendSide = temp
     }
     defaultTagName() {return 'span'}
     render() {
         /* Set x values of children */
         let innerHeight = 0
-        let x = this.paddingLeft
-        let flag = false
-        this.listOfChildren.forEach((child) => {
-            if (flag) {
-                x += this.gapBetweenChildren
+        let count = 0
+        while (count < 2) {
+            if (count === 0) {
+                var listOfChildren = this.leftChildren
+                var x = this.paddingLeft
             } else {
-                flag = true
+                var listOfChildren = this.rightChildren
+                var x = this.paddingRight
             }
-            innerHeight = Math.max(innerHeight, child.HTML_element.offsetHeight) // This is a bug waiting to happen, don't use child.offsetHeight here
-            child.HTML_element.style.left = `${x}px`
-            x += child.HTML_element.offsetWidth
-        })
+            let flag = false
+            listOfChildren.forEach((child) => {
+                if (flag) {
+                    x += this.gapBetweenChildren
+                } else {
+                    flag = true
+                }
+                innerHeight = Math.max(innerHeight, child.HTML_element.offsetHeight) // This is a bug waiting to happen, don't use child.offsetHeight here
+                console.log(count, x)
+                if (count === 0) {
+                    child.HTML_element.style.left = `${x}px`
+                } else {
+                    child.HTML_element.style.right = `${x}px`
+                }
+                x += child.HTML_element.offsetWidth
+            })
+            count += 1
+        }
         /* Set height of the current element */
         let outerHeight = innerHeight + this.paddingTop + this.paddingBottom
         this.HTML_element.style.height = `${outerHeight}px`
