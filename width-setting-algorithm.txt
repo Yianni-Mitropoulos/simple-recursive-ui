@@ -1,0 +1,48 @@
+Every node has the following attributes:
+-- innerWidthMinimum (a number)
+-- innerWidthDesired (a number)
+-- innerWidthConsumedByChildren (a method which returns a number)
+
+For each node, we're going to compute the following values:
+-- innerWidthMaximum
+-- innerWidthActual
+
+This will be achieved via a "Small-to-Big" algorithm:
+
+Step 1.
+
+    Starting with the children, recursively set each innerWidthActual to its smallest possible value,
+    and then use this to compute a maximum width for that node.
+
+    CODE:
+    this.innerWidthActual  = Math.max(this.innerWidthMinimum, this.innerWidthConsumedByChildren())
+    this.innerWidthMaximum = Math.max(this.innerWidthActual,  this.innerWidthDesired)
+
+Step 2.
+
+    Make the root node the maximum width.
+
+    CODE:
+    root.innerWidthActual = root.innerWidthMaximum
+
+Step 3.
+
+    Repeatedly make child nodes wider via an exponentially decaying round-robin process,
+    while ensuring that
+    (a) this.innerWidthConsumedByChildren() never exceeds this.innerWidthMaximum
+    (b) child.innerWidthActual never exceeds child.innerWidthMaximum
+
+    CODE:
+    let L = []
+    this.children.forEach((child) => L.push([child, 1024]))
+
+Step 4.
+
+    Recursively apply Step 3 to child nodes, until the entire tree has been optimized.
+
+    More specifically
+    We repeatedly wider until this.innerWidthActual equals this.innerWidthDesired, aborting the 
+
+Algorithm Pattern 2 ("Big-to-Small")
+1. Starting with the parents
+2. 

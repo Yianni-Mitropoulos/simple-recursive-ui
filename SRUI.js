@@ -31,13 +31,21 @@ class Component {
         this.children = new Set()
         // this.onAppend = []
         this.setInnerWidth(0, Number.POSITIVE_INFINITY)
+        this.setInnerHeightMinimum(0)
         this.setAlignment(0) // Determines how it sits inside the parent element
         this.setPadding(12)
         this.setGapBetweenChildren(12)
         this.applyStyle({background: generateColor()})
         /* Execute each argument as if it were a function */
+        this.SRUI_do(...args)
+    }
+    /* Basic methods */
+    JS_do(f) {
+        f.bind(this)()
+    }
+    SRUI_do(...args) {
         args.forEach((argument) => {
-            console.log(argument)
+            // console.log(argument)
             if (argument instanceof Component) {
                 this.append(argument)
             } else {
@@ -51,10 +59,6 @@ class Component {
                 }
             }
         })
-    }
-    /* Basic methods */
-    do(f) {
-        f.bind(this)()
     }
     append(child) {
         this.HTML_element.append(child.HTML_element)
@@ -83,6 +87,9 @@ class Component {
         this.innerWidthMinimum = w0
         this.innerWidthDesired = w1
     }
+    setInnerHeightMinimum(h) {
+        this.innerHeightMinimum = h
+    }
     setAlignment(alignment) {
         this.alignment = alignment
     }
@@ -107,7 +114,6 @@ class Component {
     }
     /* Private methods */
     renderDescendants() {
-        this.setInnerWidthDesired(window.innerWidth - this.paddingLeft - this.paddingRight) // this.HTML_element.clientWidth
         this.computeWidths()
         setTimeout(() => {
             this.computeEverythingElse()
@@ -121,20 +127,29 @@ class Component {
     }
     outerize(innerWidth) {return innerWidth + this.paddingLeft + this.paddingRight}
     innerize(outerWidth) {return outerWidth - this.paddingLeft - this.paddingRight}
+    /* Compute widths */
     computeWidths() { // innerWidthActualComputation
+        this.setInnerWidthDesired(this.innerize(window.innerWidth)) // this.HTML_element.clientWidth
         this.computeWidths_initialize()
         this.innerWidthActual = this.innerWidthMaximum
         this.computeWidths_widenChildrenRecursively()
     }
     computeWidths_initialize() {
         this.children.forEach((child) => child.computeWidths_initialize())
-        this.innerWidthActual  = Math.max(this.innerWidthMinimum, this.widthConsumedByChildren())
+        this.innerWidthActual  = Math.max(this.innerWidthMinimum, this.widthConsumedByChildren()) // set innerWidthActual to its smallest possible value
         this.innerWidthMaximum = Math.max(this.innerWidthActual,  this.innerWidthDesired)    
     }
     computeWidths_widenChildrenRecursively() {
+        // Start off by implementing the width that has already been computed for this node
         this.HTML_element.style.width = `${this.outerize(this.innerWidthActual)}px`
+        // Now widen each of its children
         this.widenChildren()
+        // Now call this method on each child
         this.children.forEach((child) => child.computeWidths_widenChildrenRecursively())
+    }
+    render() {
+        let h = Math.max(this.innerHeightMinimum, this.HTML_element.offsetHeight)
+        this.HTML_element.style.height = `${h}px`
     }
 }
 
@@ -195,14 +210,15 @@ class HorizontalComponent extends Component {
                 flag = true
             } else {
                 let hypotheticalExtraWidth = dmin * widenableChildren.size
-                if (widthConsumedByChildren + hypotheticalExtraWidth <= this.innerWidthMaximum) {
+                let extraWidthAvailable = this.innerWidthActual - widthConsumedByChildren
+                if (hypotheticalExtraWidth <= extraWidthAvailable) {
                     widenableChildren.forEach((child) => {
                         child.innerWidthActual += dmin
                     })
                     widthConsumedByChildren += hypotheticalExtraWidth
                 } else {
                     flag = true
-                    let reduced_dmin = Math.floor((this.innerWidthMaximum - widthConsumedByChildren)/widenableChildren.size)
+                    let reduced_dmin = Math.floor(extraWidthAvailable/widenableChildren.size)
                     widenableChildren.forEach((child) => {
                         child.innerWidthActual += reduced_dmin
                     })
@@ -224,7 +240,7 @@ class VerticalList extends VerticalComponent {
     render() {
         /* Align child nodes appropriately */
         this.children.forEach((child) => {
-            let x = this.paddingLeft + (this.innerWidth - child.outerWidth)*child.alignment
+            let x = this.paddingLeft + (this.innerWidthActual - child.outerize(child.innerWidthActual))*child.alignment
             child.HTML_element.style.left = `${x}px`
         })
         let height = this.paddingTop
@@ -242,6 +258,7 @@ class VerticalList extends VerticalComponent {
         /* Set the height of the current component */
         height += this.paddingBottom
         this.HTML_element.style.height = `${height}px`
+        super.render() // Must be at end
     }
 }
 
@@ -277,12 +294,29 @@ class HorizontalList extends HorizontalComponent {
             let y = this.paddingTop + (innerHeight - child.HTML_element.offsetHeight)*child.alignment
             child.HTML_element.style.top = `${y}px`
         })
+        super.render() // Must be at end
     }
 }
 
-class Paragraph extends LeafComponent {
+class Text extends LeafComponent {
     defaultTagName() {return 'p'}
-    render() {}
+}
+
+class Button extends LeafComponent {
+    defaultTagName() {return 'btn'}
+}
+
+class Image extends LeafComponent {
+    defaultTagName() {return 'img'}
+    setImageSrc(src) {
+        this.HTML_element.src = src
+        this.HTML_element.addEventListener('load', () => {
+            SRUI_bodyComponent.renderDescendants()
+        })
+        /*img.addEventListener('error', function() {
+            alert('error')
+        })*/
+    }
 }
 
 /* Define CSS functionality */
