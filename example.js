@@ -1,6 +1,6 @@
 function BODY(...args) {
     return new VerticalList(
-        ['tagName', 'body'],
+        ['setTagName', 'body'],
         ['setInnerWidthMinimum', 800],
         ['setPadding', 0],
         ['setGapBetweenChildren', 0],

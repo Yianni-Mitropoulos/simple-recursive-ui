@@ -8,7 +8,7 @@ function generateColor() {
 class Component {
     constructor(...args) {
         /* Get the tagName */
-        if (args.length !== 0 && args[0][0] === 'tagName') {
+        if (args.length !== 0 && args[0][0] === 'setTagName') {
             var tagName = args[0][1]
             args.shift()
         } else {
