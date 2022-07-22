@@ -1,440 +1,464 @@
-/* The guts of the library */
+SMALL_TIME_INCREMENT = 0
 
-function SRUI_new_component(isLeaf, f) {
-
-    function constructor(...args) {
-
-        /* Create the component */
-        if (isLeaf) {
-            var [component, finalize] = f(...args)
-        } else {
-            var [component, finalize] = f()
-        }
-
-        /* Allow the user of the library to apply styles, classes, and attributes to the element */
-        component.SRUI_applyStyle = (style) => {
-            Object.entries(style).forEach(([key, value]) => {
-                component.style[deCapitalize(key)] = value
-            })
-            return component
-        }
-
-        component.SRUI_toggleClasses = (classes) => {
-            classes.forEach((class_name) => {
-                component.classList.toggle(class_name)
-            })
-            return component
-        }
-
-        component.SRUI_setAttributes = (attributes) => {
-            Object.entries(attributes).forEach(([key, value]) => {
-                component.setAttribute(key, value)
-            })
-            return component
-        }
-
-        /* Allow the user of the library to change the SRUI name of the element */
-        component.SRUI_setName = (name) => {
-            component.SRUI_name = name
-            return component
-        }
-
-        /* Attach a method for traversing the ancestors of the component we're creating */
-        component.SRUI_forEachAncestor = (f) => {
-            let F = f.bind(component)
-            let ancestor = component
-            while (ancestor !== undefined) {
-                F(ancestor)
-                ancestor = ancestor.SRUI_parent
-            }
-        }
-
-        /* Attach a method for traversing the proper ancestors of the component we're creating */
-        component.SRUI_forEachProperAncestor = (f) => {
-            let F = f.bind(component)
-            let ancestor = component.SRUI_parent
-            while (ancestor !== undefined) {
-                F(ancestor)
-                ancestor = ancestor.SRUI_parent
-            }
-        }
-
-        /* Define the 'SRUI_getNearestNode' method */
-        component.SRUI_getNearestNode = (SRUI_name) => {
-            let retval = undefined
-            component.SRUI_forEachAncestor((ancestor) => {
-                if (retval !== undefined) {
-                    return
-                }
-                let undernodeList = ancestor.SRUI_properUndernodes[SRUI_name]
-                if (undernodeList !== undefined && undernodeList.length !== 0) {
-                    if (undernodeList.length == 1) {
-                        retval = undernodeList[0]
-                    } else {
-                        throw "There's more than one undernode with that name!"
-                    }
-                }
-            })
-            return retval
-        }
-
-        /* Attach a method for removing the component */
-        component.SRUI_remove = () => {
-            /* Remove it from the DOM */
-            component.remove()
-            /* Remove it from the parent element's list of children */
-            let arr = component.SRUI_parent.SRUI_children
-            let index = arr.indexOf(component)
-            arr.splice(index, 1)
-            /* Remove it and all its named descendants from all ancestral undernode lists */
-            component.SRUI_forEachProperAncestor((ancestor) => {
-                component.SRUI_forEachUndernode((undernode) => {
-                    let properUndernodes = ancestor.SRUI_properUndernodes[undernode.SRUI_name]
-                    let index = properUndernodes.indexOf(undernode)
-                    properUndernodes.splice(index, 1)
-                })
-            })
-        }
-
-        /* Allow the user of the library to execute arbitrary code on this component */
-        component.SRUI_do = (f) => {
-            let F = f.bind(component)
-            F()
-            return component
-        }
-
-        /* Allow the specification of event handlers */
-        component.SRUI_addEventListener = (eventName, f) => {
-            let F = f.bind(component)
-            component.addEventListener(eventName, F)
-            return component
-        }
-
-        /* Methods for operating on child nodes */
-        component.SRUI_forEachChild = (f) => {
-            let F = f.bind(component)
-            component.SRUI_children.forEach((child) => {
-                F(child)
-            })
-            return component
-        }
-
-        component.SRUI_forEachChildHereafter = (f) => {
-            let F = f.bind(component)
-            component.SRUI_onNewChild = F
-            return component
-        }
-
-        component.SRUI_forEachChildForever = (f) => {
-            component.SRUI_forEachChild(f)
-            component.SRUI_forEachChildHereafter(f)
-            return component
-        }
-
-        /* Methods for operating on grandchildren */
-        component.SRUI_forEachGrandchild = (f) => {
-            let F = f.bind(component)
-            component.SRUI_children.forEach((child) => {
-                child.SRUI_children.forEach((grandchild) => {
-                    F(grandchild)
-                })
-            })
-            return component
-        }
-
-        component.SRUI_forEachGrandchildHereafter = (f) => {
-            component.SRUI_onNewGrandchild = f
-            return component
-        }
-
-        component.SRUI_forEachGrandchildForever = (f) => {
-            component.SRUI_forEachGrandchild(f)
-            component.SRUI_forEachGrandchildHereafter(f)
-            return component
-        }
-        
-        /* Attach a method for iterating over undernodes */
-        component.SRUI_forEachUndernode = (f) => {
-            let F = f.bind(component)
-            Object.values(component.SRUI_properUndernodes).forEach((value) => {
-                value.forEach((undernode) => {
-                    F(undernode)
-                })
-            })
-            if (component.SRUI_name !== undefined) {
-                F(component)
-            }
-            return component
-        }
-
-        /* Allow the setting of state */
-        component.SRUI_setVariable = (key, value) => {
-            component.SRUI_variables[key] = value
-            return component
-        }
-
-        component.SRUI_applyMargination = (margination) => {
-            if (margination === undefined) {
-                margination = component.SRUI_getMargination()
-            }
-            let flag = false
-            component.SRUI_forEachChild((child) => {
-                if (child.SRUI_blockMargination !== true && child.SRUI_margination === undefined) {
-                    child.SRUI_applyMargination(margination)
-                }
-                if (flag) {
-                    child.style.marginTop = margination
-                }
-                flag = true
-            })
-        }
-
-        /* Specify some starting values */
-        component.SRUI_parent = undefined
-        component.SRUI_children = []
-        component.SRUI_properUndernodes = {}
-        component.SRUI_name = undefined
-        component.SRUI_margination = undefined
-        component.SRUI_onNewChild      = (child) => {}
-        component.SRUI_onNewGrandchild = (grandchild) => {}
-        component.SRUI_variables = {} // This line create spaces for arbitrary data that the user of library may want to store
-
-        /* If the component we're constructing is a leaf, we're done at this point */
-        if (isLeaf) {
-            let F = finalize.bind(component)
-            F()
-            return component
-        }
-        /* Otherwise... */
-
-        /* Attach methods for altering margination */
-        component.SRUI_setMargination = (margination) => {
-            component.SRUI_margination = margination
-            component.SRUI_applyMargination(margination)
-            return component
-        }
-
-        /* Attach a component for recursively getting margination */
-        component.SRUI_getMargination = () => {
-            let retval = undefined
-            component.SRUI_forEachAncestor((ancestor) => {
-                if (retval === undefined) {
-                    if (ancestor.SRUI_margination !== undefined) {
-                        retval = ancestor.SRUI_margination
-                    }
-                }
-            })
-            return retval
-        }
-                
-        /* Attach a method for attaching new (proper) undernodes */
-        component.SRUI_attachUndernode = (newUndernode) => {
-            let undernodeList = component.SRUI_properUndernodes[newUndernode.SRUI_name]
-            if (undernodeList === undefined) {
-                undernodeList = []
-                component.SRUI_properUndernodes[newUndernode.SRUI_name] = undernodeList
-            }
-            undernodeList.push(newUndernode)
-        }
-        
-        /* Attach a method for appending child nodes */
-        component.SRUI_appendChild = (...args) => {
-            args.forEach((child) => {
-                /* Assign the component we're building as the the child's parent */
-                child.SRUI_parent = component
-                /* Register the child's undernodes (including the child element itself) so that they're also undernodes of the component and all its ancestors */
-                component.SRUI_forEachAncestor((ancestor) => {
-                    child.SRUI_forEachUndernode((undernode) => {
-                        ancestor.SRUI_attachUndernode(undernode)
-                    })
-                })
-                /* Append the child onto the internal SRUI children list */
-                component.SRUI_children.push(child)
-                /* If the length of the above list is 2 or more, give the child a topMargin */
-                let margination = component.SRUI_getMargination()
-                if (margination !== undefined) {
-                    child.style.marginTop = margination
-                }
-                /* Call onNewChild and onNewGrandchild handlers */
-                component.SRUI_onNewChild(child)
-                if (component.SRUI_parent !== undefined) {
-                    component.SRUI_parent.SRUI_onNewGrandchild(child)
-                }
-                /* Append the child to the relevant part of the DOM */
-                component.append(child)
-            })
-        }
-        
-        /* Attach a method for prepending child nodes */
-        component.SRUI_prependChild = (...args) => {
-            args.forEach((child) => {
-                /* Assign the component we're building as the the child's parent */
-                child.SRUI_parent = component
-                /* Register the child's undernodes (including the child element itself) so that they're also undernodes of the component and all its ancestors */
-                component.SRUI_forEachAncestor((ancestor) => {
-                    child.SRUI_forEachUndernode((undernode) => {
-                        ancestor.SRUI_attachUndernode(undernode)
-                    })
-                })
-                component.SRUI_children.unshift(child)
-                component.prepend(child)
-            })
-        }
-        
-        /* Append the children passed that were passed in */
-        component.SRUI_appendChild(...args)
-        
-        /* Return the component instance that we just constructed */
-        let F = finalize.bind(component)
-        F()
-        return component
-    }
-
-    return constructor
+/* Following function is by kigiri and Redoman. Source: https://stackoverflow.com/a/25873123 */
+function generateColor() {
+    return 'hsla(' + Math.floor(Math.random()*360) + ', 100%, 70%, 1)'
 }
 
-/* Basic leaf components */
-
-BREAK = SRUI_new_component(true, () => {
-    return [document.createElement('br'), () => {}]
-})
-
-TEXT = SRUI_new_component(true, (msg) => {
-    return [document.createTextNode(msg), () => {}]
-})
-
-SLIDER = SRUI_new_component(true, (obj) => {
-    return [
-        document.createElement('input'),
-        function() {
-            this.SRUI_setAttributes(obj)
-            this.setAttribute("type", "range")
+class Component {
+    constructor(...args) {
+        /* Get the tagName */
+        if (args.length !== 0 && args[0][0] === 'setTagName') {
+            var tagName = args[0][1]
+            args.shift()
+        } else {
+            var tagName = this.defaultTagName()
         }
-    ]
-})
-
-IMAGE = SRUI_new_component(true, (obj) => {
-    return [
-        document.createElement("img"),
-        function() {
-            this.SRUI_setAttributes(obj)
+        /* Construct a corresponding HTML element, or else use the document.body element */
+        if (tagName !== 'body') {
+            this.HTML_element = document.createElement(tagName)
+        } else {
+            this.HTML_element = document.body
+            window.SRUI_bodyComponent = this // Set up a global variable for the end-user of the library
+            addEventListener('resize',
+                this.renderDescendants.bind(this)
+            )
+            setTimeout(
+                () => this.renderDescendants(),
+            SMALL_TIME_INCREMENT)
         }
-    ]
-})
-
-/* Basic non-leaf components */
-
-BODY = SRUI_new_component(false, () => {
-    let body = document.body
-    return [body, function() {
-        if (body.SRUI_children.length !== 0) {
-            let first_child = body.SRUI_children[0]
-            if (first_child.style.position === 'fixed') {
-                console.log(`SRUI: "I\'ve included extra padding because the first child element of BODY has fixed position."`)
-                body.style.paddingTop = `${first_child.clientHeight}px`
+        /* Initialize variables */
+        this.children = new Set()
+        this.onAppend = new Set()
+        this.setInnerWidth(0, Number.POSITIVE_INFINITY)
+        this.setInnerHeightMinimum(0)
+        this.setAlignment(0) // Determines how it sits inside the parent element
+        this.setPadding(12)
+        this.setGapBetweenChildren(12)
+        this.applyStyle({background: generateColor()})
+        /* Search variables */
+        this.properUndernodes = {}
+        this.SRUI_name = undefined
+        /* Execute each argument as if it were a function */
+        this.SRUI_do(...args)
+    }
+    /* Basic methods */
+    JS_do(f) {
+        f.bind(this)()
+    }
+    SRUI_do(...args) {
+        args.forEach((argument) => {
+            // console.log(argument)
+            if (argument === undefined) {
+                throw "UndefinedValueError: You're probably missing a comma somewhere. The regex \\][\\n\\r\\s]+\\[ may help you find the problem."
             }
-            let last_child = body.SRUI_children[body.SRUI_children.length - 1]
-            if (last_child.style.position === 'fixed') {
-                console.log(`SRUI: "I\'ve included extra padding because the first child element of BODY has fixed position."`)
-                body.style.paddingBottom = `${last_child.clientHeight}px`
+            else if (argument instanceof Component) {
+                this.append(argument)
+            } else if (typeof argument === 'string') {
+                this.setInnerHTML(argument)
+            } else {
+                try {
+                    /* If it's an instruction, execute it */
+                    var opname = argument[0]
+                    let remaining_params = argument.slice(1)
+                    this[opname](...remaining_params)
+                } catch {
+                    console.log(`Problem with [${argument}] on the following component:`, this)
+                }
+            }
+        })
+    }
+    JS_forEachChild(f) {
+        this.onAppend.add(f)
+        this.children.forEach(f)
+    }
+    SRUI_forEachChild(...args) {
+        let f = (child) => {child.SRUI_do(...args)}
+        this.onAppend.add(f)
+        this.children.forEach(f)
+    }
+    addEventListener(eventName, handler) {
+        this.HTML_element.addEventListener(eventName, handler)
+    }
+    /* Methods for adjusting instance variables */
+    setInnerWidthMinimum(w) {
+        this.innerWidthMinimum = w
+    }
+    setInnerWidthDesired(w) {
+        this.innerWidthDesired = w
+    }
+    setInnerWidth(w0, w1) {
+        if (w1 === undefined) {
+            w1 = w0
+        }
+        this.innerWidthMinimum = w0
+        this.innerWidthDesired = w1
+    }
+    setInnerHeightMinimum(h) {
+        this.innerHeightMinimum = h
+    }
+    setAlignment(alignment) {
+        this.alignment = alignment
+    }
+    setPadding(padding) {
+        this.paddingTop    = padding
+        this.paddingBottom = padding
+        this.paddingLeft   = padding
+        this.paddingRight  = padding
+        this.HTML_element.style.padding = `${padding}px` // Mainly useful for leaf nodes
+    }
+    setPaddingTop(padding) {
+        this.paddingTop = padding
+        this.HTML_element.style.paddingTop = `${padding}px` // Mainly useful for leaf nodes
+    }
+    setPaddingLeft(padding) {
+        this.paddingLeft = padding
+        this.HTML_element.style.paddingLeft = `${padding}px` // Mainly useful for leaf nodes
+    }
+    setPaddingRight(padding) {
+        this.paddingRight = padding
+        this.HTML_element.style.paddingRight = `${padding}px` // Mainly useful for leaf nodes
+    }
+    setPaddingBottom(padding) {
+        this.paddingBottom = padding
+        this.HTML_element.style.paddingBottom = `${padding}px` // Mainly useful for leaf nodes
+    }
+    setGapBetweenChildren(gap) {
+        this.gapBetweenChildren = gap
+    }
+    applyStyle(obj) {
+        Object.entries(obj).forEach(([key, value]) => {
+            this.HTML_element.style[key] = value
+        })
+        return this
+    }
+    toggleClass = (...classNames) => {
+        classNames.forEach((className) => {
+            this.HTML_element.classList.toggle(className)
+        })
+    }
+    setInnerHTML(msg) {
+        this.HTML_element.innerHTML = msg + '&#8203;' // Prevents selections at the end of one paragraph from bleeding over into the next paragraph
+    }
+
+    /* 
+     * Render methods
+     *
+     * Mostly new code
+     * 
+     */
+
+    renderDescendants() {
+        this.computeWidths()
+        setTimeout(() => {
+            this.computeEverythingElse()
+        }, SMALL_TIME_INCREMENT)
+    }
+    computeEverythingElse() {
+        this.children.forEach((child) => {
+            child.computeEverythingElse()
+        })
+        this.render() // Provided by the component type
+    }
+    outerize(innerWidth) {return innerWidth + this.paddingLeft + this.paddingRight}
+    innerize(outerWidth) {return outerWidth - this.paddingLeft - this.paddingRight}
+    computeWidths() { // innerWidthActualComputation
+        this.setInnerWidthDesired(this.innerize(window.innerWidth)) // this.HTML_element.clientWidth
+        this.computeWidths_initialize()
+        this.innerWidthActual = this.innerWidthMaximum
+        this.computeWidths_widenChildrenRecursively()
+    }
+    computeWidths_initialize() {
+        this.children.forEach((child) => child.computeWidths_initialize())
+        this.innerWidthActual  = Math.max(this.innerWidthMinimum, this.widthConsumedByChildren()) // set innerWidthActual to its smallest possible value
+        this.innerWidthMaximum = Math.max(this.innerWidthActual,  this.innerWidthDesired)    
+    }
+    computeWidths_widenChildrenRecursively() {
+        // Start off by implementing the width that has already been computed for this node
+        this.HTML_element.style.width = `${this.outerize(this.innerWidthActual)}px`
+        // Now widen each of its children
+        this.widenChildren()
+        // Now call this method on each child
+        this.children.forEach((child) => child.computeWidths_widenChildrenRecursively())
+    }
+    render() {
+        let h = Math.max(this.innerHeightMinimum, this.HTML_element.offsetHeight) // This line seems suspect.
+        this.HTML_element.style.height = `${h}px`
+    }
+
+    /* 
+     * Node-search methods
+     *
+     * (From original project.)
+     * 
+     */
+
+    append(child) {
+        this.HTML_element.append(child.HTML_element)
+        child.parent = this
+        this.children.add(child)
+        this.onAppend.forEach((handler) => {
+            handler(child)
+        })
+        /* Support node search */
+        this.forEachAncestor((ancestor) => {
+            child.forEachUndernode((undernode) => {
+                ancestor.attachUndernode(undernode)
+            })
+        })
+    }
+
+    /* Attach a method for traversing the ancestors of the component we're creating */
+    forEachAncestor(f) {
+        let F = f.bind(this)
+        let ancestor = this
+        while (ancestor !== undefined) {
+            F(ancestor)
+            ancestor = ancestor.parent
+        }
+    }
+
+    forEachUndernode(f) {
+        let F = f.bind(this)
+        Object.values(this.properUndernodes).forEach((value) => {
+            value.forEach((undernode) => {
+                F(undernode)
+            })
+        })
+        if (this.SRUI_name !== undefined) {
+            F(this)
+        }
+    }
+
+    attachUndernode(newUndernode) {
+        let undernodeList = this.properUndernodes[newUndernode.SRUI_name]
+        if (undernodeList === undefined) {
+            undernodeList = []
+            this.properUndernodes[newUndernode.SRUI_name] = undernodeList
+        }
+        undernodeList.push(newUndernode)
+    }
+
+    setName(name) {
+        this.SRUI_name = name
+    }
+
+    findNode(SRUI_name) {
+        let retval = undefined
+        this.forEachAncestor((ancestor) => {
+            if (retval !== undefined) {
+                return
+            }
+            let undernodeList = ancestor.properUndernodes[SRUI_name]
+            if (undernodeList !== undefined && undernodeList.length !== 0) {
+                if (undernodeList.length == 1) {
+                    retval = undernodeList[0]
+                } else {
+                    throw "There's more than one undernode with that name!"
+                }
+            }
+        })
+        return retval
+    }
+
+}
+
+class VerticalComponent extends Component {
+    widthConsumedByChildren() {
+        let runningMax = 0
+        this.children.forEach((child) => {
+            runningMax = Math.max(runningMax, child.outerize(child.innerWidthActual))
+        })
+        return runningMax
+    }
+    widenChildren() {
+        this.children.forEach((child) => {
+            child.innerWidthActual = Math.max(
+                child.innerWidthActual,
+                Math.min(
+                    child.innerize(this.innerWidthActual),
+                    child.innerWidthDesired
+                )
+            )
+        })
+    }
+}
+
+class LeafComponent extends Component {
+    widthConsumedByChildren() {return 0}
+    widenChildren() {}
+}
+
+class HorizontalComponent extends Component {
+    widthConsumedByChildren() {
+        let runningSum = 0
+        let flag = false
+        this.children.forEach((child) => {
+            runningSum += child.outerize(child.innerWidthActual)
+            if (flag) {
+                runningSum += this.gapBetweenChildren
+            }
+            flag = true
+        })
+        return runningSum
+    }
+    widenChildren() {
+        let widthConsumedByChildren = this.widthConsumedByChildren()
+        let widenableChildren = new Set(this.children)
+        let flag = false
+        while (!flag) {
+            let dmin = Number.POSITIVE_INFINITY
+            widenableChildren.forEach((child) => {
+                let d = child.innerWidthMaximum - child.innerWidthActual
+                if (d > 0) {
+                    dmin = Math.min(dmin, d)
+                } else {
+                    widenableChildren.delete(child)
+                }
+            })
+            if (widenableChildren.size === 0) {
+                flag = true
+            } else {
+                let hypotheticalExtraWidth = dmin * widenableChildren.size
+                let extraWidthAvailable = this.innerWidthActual - widthConsumedByChildren
+                if (hypotheticalExtraWidth <= extraWidthAvailable) {
+                    widenableChildren.forEach((child) => {
+                        child.innerWidthActual += dmin
+                    })
+                    widthConsumedByChildren += hypotheticalExtraWidth
+                } else {
+                    flag = true
+                    let reduced_dmin = Math.floor(extraWidthAvailable/widenableChildren.size)
+                    widenableChildren.forEach((child) => {
+                        child.innerWidthActual += reduced_dmin
+                    })
+                }    
             }
         }
-    }]
-})
+    }
+}
 
-PARAGRAPH = SRUI_new_component(false, () => {
-    let p = document.createElement('p')
-    return [p, () => {}]
-})
-
-BUTTON = SRUI_new_component(false, () => {
-    let btn = document.createElement('button')
-    return [btn, () => {}]
-})
-
-DIV = SRUI_new_component(false, () => {
-    let div = document.createElement('div')
-    return [div, () => {}]
-})
-
-SPAN_BLOCK = SRUI_new_component(false, () => {
-    let span = document.createElement('span')
-    span.SRUI_blockMargination = true
-    span.style.display = 'block'
-    return [span, () => {}]
-})
-
-SPAN_INLINE = SRUI_new_component(false, () => {
-    let span = document.createElement('span')
-    span.SRUI_blockMargination = true
-    span.style.display = 'inline-block'
-    return [span, () => {}]
-})
-
-/* Tables */
-
-TABLE_DATA_CELL = SRUI_new_component(false, () => {
-    let td = document.createElement('td')
-    return [td, () => {}]
-})
-
-TABLE_ROW = SRUI_new_component(false, () => {
-    let tr = document.createElement('tr')
-    return [tr, () => {}]
-})
-
-TABLE = SRUI_new_component(false, () => {
-    let table = document.createElement('table')
-    return [table, () => {}]
-})
-
-/* Headers and footers */
-
-HEADER = SRUI_new_component(false, () => {
-    let header = document.createElement('header')
-    return [
-        header,
-        function() {
-            this.SRUI_applyStyle({
-                width: "100%",
-                top: "0",
-            })
+class VerticalList extends VerticalComponent {
+    append(child) {
+        if (this.listOfChildren === undefined) {
+            this.listOfChildren = []
         }
-    ]
-})
+        this.listOfChildren.push(child)
+        super.append(child)
+    }
+    defaultTagName() {return 'div'}
+    render() {
+        /* Align child nodes appropriately */
+        this.children.forEach((child) => {
+            let x = this.paddingLeft + (this.innerWidthActual - child.outerize(child.innerWidthActual))*child.alignment
+            child.HTML_element.style.left = `${x}px`
+        })
+        let height = this.paddingTop
+        let flag = false
+        this.listOfChildren.forEach((child) => {
+            /* Height of parent element */
+            if (flag) {
+                height += this.gapBetweenChildren
+            } else {
+                flag = true
+            }
+            child.HTML_element.style.top = `${height}px`
+            height += child.HTML_element.offsetHeight
+        })
+        /* Set the height of the current component */
+        height += this.paddingBottom
+        this.HTML_element.style.height = `${height}px`
+        super.render() // Must be at end
+    }
+}
 
-FOOTER = SRUI_new_component(false, () => {
-    let footer = document.createElement('footer')
-    return [
-        footer,
-        function() {
-            this.SRUI_applyStyle({
-                width: "100%",
-                bottom: "0",
-            })
+class HorizontalList extends HorizontalComponent {
+    append(child) {
+        if (this.currentAppendSide === undefined) {
+            this.leftChildren  = []
+            this.rightChildren = []
+            this.currentAppendSide = this.leftChildren
+            this.otherAppendSide   = this.rightChildren
         }
-    ]
-})
+        this.currentAppendSide.push(child)
+        super.append(child)
+    }
+    toggleAppendSide() {
+        if (this.currentAppendSide === undefined) {
+            this.leftChildren  = []
+            this.rightChildren = []
+            this.currentAppendSide = this.leftChildren
+            this.otherAppendSide   = this.rightChildren
+        }
+        let temp = this.currentAppendSide
+        this.currentAppendSide = this.otherAppendSide
+        this.otherAppendSide = temp
+    }
+    defaultTagName() {return 'span'}
+    render() {
+        /* Set x values of children */
+        let innerHeight = 0
+        let count = 0
+        while (count < 2) {
+            if (count === 0) {
+                var listOfChildren = this.leftChildren
+                var x = this.paddingLeft
+            } else {
+                var listOfChildren = this.rightChildren
+                var x = this.paddingRight
+            }
+            let flag = false
+            listOfChildren.forEach((child) => {
+                if (flag) {
+                    x += this.gapBetweenChildren
+                } else {
+                    flag = true
+                }
+                innerHeight = Math.max(innerHeight, child.HTML_element.offsetHeight) // This line seems suspect. Maybe don't use child.offsetHeight here
+                console.log(count, x)
+                if (count === 0) {
+                    child.HTML_element.style.left = `${x}px`
+                } else {
+                    child.HTML_element.style.right = `${x}px`
+                }
+                x += child.HTML_element.offsetWidth
+            })
+            count += 1
+        }
+        /* Set height of the current element */
+        innerHeight = Math.max(innerHeight, this.innerHeightMinimum) // This line seems suspect.
+        let outerHeight = innerHeight + this.paddingTop + this.paddingBottom
+        this.HTML_element.style.height = `${outerHeight}px`
+        /* Set y values of children */
+        this.children.forEach((child) => {
+            let y = this.paddingTop + (innerHeight - child.HTML_element.offsetHeight)*child.alignment
+            child.HTML_element.style.top = `${y}px`
+        })
+        super.render() // Must be at end
+    }
+}
 
-/* Use this to achieve side by side functionality with floats */
+class Text extends LeafComponent {
+    defaultTagName() {return 'p'}
+}
 
-CLEAR_LEFT = SRUI_new_component(true, () => {
-    let div = document.createElement('div')
-    div.style.clear = "left"
-    return [div, () => {}]
-})
+class Button extends LeafComponent {
+    defaultTagName() {return 'btn'}
+}
 
-CLEAR_RIGHT = SRUI_new_component(true, () => {
-    let div = document.createElement('div')
-    div.style.clear = "right"
-    return [div, () => {}]
-})
-
-CLEAR_BOTH = SRUI_new_component(true, () => {
-    let div = document.createElement('div')
-    div.style.clear = "both"
-    return [div, () => {}]
-})
+class Image extends LeafComponent {
+    defaultTagName() {return 'img'}
+    setImageAttributes(src, alt) {
+        this.HTML_element.src = src
+        this.HTML_element.alt = alt
+        this.HTML_element.addEventListener('load', () => {
+            SRUI_bodyComponent.renderDescendants()
+        })
+        /*img.addEventListener('error', function() {
+            alert('error')
+        })*/
+    }
+}
 
 /* Define CSS functionality */
 
@@ -521,8 +545,9 @@ let SRUI_cssClassCount = 0
 
 CSS_DO([
     [CSS_EVERYTHING, {
+        position:  'absolute',
         boxSizing: 'border-box',
-        margin: '0',
+        margin:  '0',
         padding: '0',
         borderWidth: '0'
     }]

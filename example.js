@@ -1,160 +1,115 @@
-/* Define a combined TEXT and SLIDER component such that the text displays the current value of the slider */
-
-function PARAGRAPH_SLIDER(obj) {
-    let width = obj["width"] // Why is it that these can be the same
-    let sliderWidth = width  // and things still look reasonable?
-                             // CSS is so weird...
-    return SPAN_BLOCK(
-
-        /* Slider text */
-        SPAN_INLINE(
-            PARAGRAPH(
-                TEXT(obj["value"])
-                .SRUI_setName("displayForSliderValue")
-            )
-        )
-        .SRUI_applyStyle({float: "left"}),
-
-        /* The slider itself */
-        SPAN_INLINE(
-            SLIDER({
-                min: obj["min"],
-                value: obj["value"],
-                max: obj["max"]
-            })
-            .SRUI_applyStyle({
-                width: `${sliderWidth}em`,
-            })
-            .SRUI_addEventListener("input", function () {
-                let slider_value = this.value
-                let nearest_display_area = this.SRUI_getNearestNode('displayForSliderValue')
-                nearest_display_area.nodeValue = slider_value.toString()
-            }),
-        )
-        .SRUI_applyStyle({float: "right"}),
-
-        /* Clear the floats */
-        CLEAR_BOTH()
-
+function BODY(...args) {
+    return new VerticalList(
+        ['setTagName', 'body'],
+        ['setInnerWidthMinimum', 800],
+        ['setPadding', 0],
+        ['setGapBetweenChildren', 0],
+        ...args,
     )
-    .SRUI_applyStyle({
-        width: `${width}em`
-    })
 }
 
-/* Define our styles as variables */
+function HERO_IMAGE() {
+    xx = new HorizontalList(
+        new VerticalList(
+            new Text(
+                "SRUI",
+                ["applyStyle", {
+                    background: 'Transparent',
+                    textAlign: 'center',
+                    fontSize: '8em'
+                }],
+                ['setAlignment', 1/2],
+                ['setInnerWidthDesired', Number.POSITIVE_INFINITY]
+            ),
+            ['applyStyle', {background: 'Transparent'}],
+            ['setAlignment', 1/2],
+        ),
+        new VerticalList(
+            new Image(
+                ['setImageAttributes', 'https://loremflickr.com/240/240', 'Filler Image'],
+                ['setInnerWidthDesired', 240],
+                ['setInnerHeightMinimum', 240],
+                ['applyStyle', {background: 'Green'}],
+                ['setPadding', 0],
+                ['setAlignment', 1/2],
+            ),
+            ['applyStyle', {background: 'Transparent'}],
+            ['setAlignment', 1/2],
+        ),
+        ['setInnerHeightMinimum', 300],
+        ['applyStyle', {background: 'Green'}],
+    )
+    return xx
+}
 
-stdPadding = "1em"
-stdMargination = "0.7em"
+function NAVBAR(...args) {
+    return new VerticalList(
+        ['setPadding', 0],
+        ['applyStyle', {background: 'Blue'}],
+        new HorizontalList(
+            ['toggleAppendSide'],
+            ['setAlignment', 1/2],
+            ['setInnerWidth', 700, 800],
+            ['setPadding', 0],
+            ['setGapBetweenChildren', 0],
+            ['applyStyle', {background: 'Blue'}],
+            ['SRUI_forEachChild',
+                ['toggleClass', button_CSSC],
+                ['addEventListener', 'click', () => {alert('foo')}],
+                ['setInnerWidth', 80, 100],
+            ],
+            ...args,
+        )
+    )
+}
 
-tableCell = CSS_CLASS({
-        verticalAlign: "top",
-        backgroundColor: "Green",
-        padding: stdPadding,
-        transition: "0.16s"
-    }, {
-        hover: {
-            backgroundColor: "Yellow"
-        }
-    }
-)
+function MAIN(...args) {
+    return new VerticalList(
+        ['setInnerWidth', 600, 700],
+        ['setAlignment', 1/2],
+        ['setPadding', 50],
+        ['setGapBetweenChildren', 50],
+        ...args,
+    )
+}
 
-paragraphSliderWidth = 14; // em
+function FOOTER(...args) {
+    return new HorizontalList(
+        ['setInnerWidth', 600, 700],
+        ['setAlignment', 1/2],
+        ['setPadding', 50],
+        ['setGapBetweenChildren', 50],
+        ...args,
+    )
+}
 
-/* Create the page */
+button_CSSC = CSS_CLASS({
+    cursor: 'pointer',
+    textAlign: 'center',
+})
 
 BODY(
-    HEADER(
-        TEXT("Simple Recursive User Interface (SRUI)")
-    )
-    .SRUI_applyStyle({
-        position: "sticky",
-        padding: stdPadding,
-        backgroundColor: "Blue",
-    }),
-    DIV(
-        PARAGRAPH(TEXT("Welcome, traveller!")),
-        PARAGRAPH(TEXT("Here's some sliders for you: ")),
-        PARAGRAPH_SLIDER({
-            min: -5,
-            value: 0,
-            max: 5,
-            width: paragraphSliderWidth,
-        }),
-        PARAGRAPH_SLIDER({
-            min: -5,
-            value: 0,
-            max: 5,
-            width: paragraphSliderWidth,
-        }),
-        DIV(
-            PARAGRAPH(TEXT("And here's a button: ")),
-            BUTTON(TEXT("I'm a button"))
-                .SRUI_addEventListener('click', function() {
-                    let outputField = this.SRUI_getNearestNode('outputField')
-                    outputField.SRUI_appendChild(
-                        PARAGRAPH(
-                            TEXT(`You've clicked the button! Count is ${outputField.SRUI_variables['count']}. `),
-                            BUTTON(TEXT('Delete Line'))
-                            .SRUI_addEventListener('click', function() {
-                                this.SRUI_parent.remove()
-                            })
-                        )
-                    )
-                    outputField.SRUI_variables['count'] += 1
-                }),
-            BREAK(),
-        )
-        .SRUI_setName('outputField')
-        .SRUI_setMargination(stdMargination)
-        .SRUI_setVariable('count', 0),
-        DIV(
-            PARAGRAPH(TEXT("You can also make tables. Try clicking on the elements!")),
-            TABLE(
-                TABLE_ROW(
-                    TABLE_DATA_CELL(TEXT("1")),
-                    TABLE_DATA_CELL(TEXT("2")),
-                    TABLE_DATA_CELL(TEXT("3")),
-                ),
-                TABLE_ROW(
-                    TABLE_DATA_CELL(TEXT("4")),
-                    TABLE_DATA_CELL(TEXT("5")),
-                    TABLE_DATA_CELL(TEXT("6")),
-                ),
-            )
-            .SRUI_applyStyle({textAlign: "center"})
-            .SRUI_forEachGrandchildForever((cell) => {
-                cell.SRUI_toggleClasses([tableCell])
-                cell.onclick = function() {
-                    this.SRUI_remove()
-                }
-            })
+    HERO_IMAGE(),
+    NAVBAR(
+        new Button('B1'),
+        new Button('B2'),
+        new Button('B3'),
+    ),
+    MAIN(
+        new Text(
+            "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.",
         ),
-        PARAGRAPH(TEXT("And finally, a clickable image!")),
-        IMAGE({
-            src: "https://loremflickr.com/240/240",
-            alt: "A placeholder image to illustrate the library"
-        })
-        .SRUI_setVariable('count', 240)
-        .SRUI_addEventListener('click', function() {
-            let count = this.SRUI_variables['count']
-            this.SRUI_setVariable('count', count + 1)
-            this.src = `https://loremflickr.com/240/${count+1}`
-        }),
-    )
-    .SRUI_setMargination(stdMargination)
-    .SRUI_applyStyle({
-        padding: stdPadding,
-    }),
+        new Text(
+            `Contrary to popular belief, Lorem Ipsum is not simply random text. It has roots in a piece of classical Latin literature from 45 BC, making it over 2000 years old. Richard McClintock, a Latin professor at Hampden-Sydney College in Virginia, looked up one of the more obscure Latin words, consectetur, from a Lorem Ipsum passage, and going through the cites of the word in classical literature, discovered the undoubtable source. Lorem Ipsum comes from sections 1.10.32 and 1.10.33 of "de Finibus Bonorum et Malorum" (The Extremes of Good and Evil) by Cicero, written in 45 BC. This book is a treatise on the theory of ethics, very popular during the Renaissance. The first line of Lorem Ipsum, "Lorem ipsum dolor sit amet..", comes from a line in section 1.10.32.`
+        ),
+    ),
     FOOTER(
-        TEXT("This is a footer")
+        new Text(
+            "Left footer section",
+            ["setName", "leftFooterElement"]
+        ),
+        new Text(
+            "Right footer section"
+        ),
     )
-    .SRUI_applyStyle({
-        position: "fixed",
-        padding: stdPadding,
-        backgroundColor: "Red"
-    })
 )
-.SRUI_applyStyle({
-    backgroundColor: "LightBlue"
-})
