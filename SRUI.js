@@ -339,15 +339,19 @@ class HorizontalComponent extends Component {
 }
 
 class VerticalList extends VerticalComponent {
-    append(child) {
+    init(child) {
         if (this.listOfChildren === undefined) {
             this.listOfChildren = []
         }
+    }
+    append(child) {
+        this.init()
         this.listOfChildren.push(child)
         super.append(child)
     }
     defaultTagName() {return 'div'}
     render() {
+        this.init()
         /* Align child nodes appropriately */
         this.children.forEach((child) => {
             let x = this.paddingLeft + (this.innerWidthActual - child.outerize(child.innerWidthActual))*child.alignment
@@ -373,29 +377,28 @@ class VerticalList extends VerticalComponent {
 }
 
 class HorizontalList extends HorizontalComponent {
-    append(child) {
+    init() {
         if (this.currentAppendSide === undefined) {
             this.leftChildren  = []
             this.rightChildren = []
             this.currentAppendSide = this.leftChildren
             this.otherAppendSide   = this.rightChildren
         }
+    }
+    append(child) {
+        this.init()
         this.currentAppendSide.push(child)
         super.append(child)
     }
     toggleAppendSide() {
-        if (this.currentAppendSide === undefined) {
-            this.leftChildren  = []
-            this.rightChildren = []
-            this.currentAppendSide = this.leftChildren
-            this.otherAppendSide   = this.rightChildren
-        }
+        this.init()
         let temp = this.currentAppendSide
         this.currentAppendSide = this.otherAppendSide
         this.otherAppendSide = temp
     }
     defaultTagName() {return 'span'}
     render() {
+        this.init()
         /* Set x values of children */
         let innerHeight = 0
         let count = 0
