@@ -9,17 +9,37 @@ function BODY(...args) {
 }
 
 function HERO_IMAGE() {
-    return new VerticalList(
-        new Image(
-            ['setImageSrc', 'https://loremflickr.com/240/240'],
-            ['setInnerWidthDesired', 240],
+    xx = new HorizontalList(
+        new VerticalList(
+            new Text(
+                "SRUI",
+                ["applyStyle", {
+                    background: 'Transparent',
+                    textAlign: 'center',
+                    fontSize: '8em'
+                }],
+                ['setAlignment', 1/2],
+                ['setInnerWidthDesired', Number.POSITIVE_INFINITY]
+            ),
+            ['applyStyle', {background: 'Transparent'}],
             ['setAlignment', 1/2],
-            ['setInnerHeightMinimum', 240],
-            ['applyStyle', {background: 'Green'}],
         ),
-        ['setInnerHeightMinimum', 400],
+        new VerticalList(
+            new Image(
+                ['setImageAttributes', 'https://loremflickr.com/240/240', 'Filler Image'],
+                ['setInnerWidthDesired', 240],
+                ['setInnerHeightMinimum', 240],
+                ['applyStyle', {background: 'Green'}],
+                ['setPadding', 0],
+                ['setAlignment', 1/2],
+            ),
+            ['applyStyle', {background: 'Transparent'}],
+            ['setAlignment', 1/2],
+        ),
+        ['setInnerHeightMinimum', 300],
         ['applyStyle', {background: 'Green'}],
     )
+    return xx
 }
 
 function NAVBAR(...args) {

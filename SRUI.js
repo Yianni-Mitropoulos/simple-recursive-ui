@@ -138,7 +138,7 @@ class Component {
         })
     }
     setInnerHTML(msg) {
-        this.HTML_element.innerHTML = msg + '&nbsp;' // Prevents selections at the end of one paragraph from bleeding over into the next paragraph
+        this.HTML_element.innerHTML = msg + '&#8203;' // Prevents selections at the end of one paragraph from bleeding over into the next paragraph
     }
 
     /* 
@@ -182,7 +182,7 @@ class Component {
         this.children.forEach((child) => child.computeWidths_widenChildrenRecursively())
     }
     render() {
-        let h = Math.max(this.innerHeightMinimum, this.HTML_element.offsetHeight)
+        let h = Math.max(this.innerHeightMinimum, this.HTML_element.offsetHeight) // This line seems suspect.
         this.HTML_element.style.height = `${h}px`
     }
 
@@ -414,7 +414,7 @@ class HorizontalList extends HorizontalComponent {
                 } else {
                     flag = true
                 }
-                innerHeight = Math.max(innerHeight, child.HTML_element.offsetHeight) // This is a bug waiting to happen, don't use child.offsetHeight here
+                innerHeight = Math.max(innerHeight, child.HTML_element.offsetHeight) // This line seems suspect. Maybe don't use child.offsetHeight here
                 console.log(count, x)
                 if (count === 0) {
                     child.HTML_element.style.left = `${x}px`
@@ -426,6 +426,7 @@ class HorizontalList extends HorizontalComponent {
             count += 1
         }
         /* Set height of the current element */
+        innerHeight = Math.max(innerHeight, this.innerHeightMinimum) // This line seems suspect.
         let outerHeight = innerHeight + this.paddingTop + this.paddingBottom
         this.HTML_element.style.height = `${outerHeight}px`
         /* Set y values of children */
@@ -447,8 +448,9 @@ class Button extends LeafComponent {
 
 class Image extends LeafComponent {
     defaultTagName() {return 'img'}
-    setImageSrc(src) {
+    setImageAttributes(src, alt) {
         this.HTML_element.src = src
+        this.HTML_element.alt = alt
         this.HTML_element.addEventListener('load', () => {
             SRUI_bodyComponent.renderDescendants()
         })
