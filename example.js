@@ -9,7 +9,7 @@ function BODY(...args) {
 }
 
 function HERO_IMAGE() {
-    xx = new HorizontalList(
+    return new HorizontalList(
         new VerticalList(
             new Text(
                 "SRUI",
@@ -39,7 +39,6 @@ function HERO_IMAGE() {
         ['setInnerHeightMinimum', 300],
         ['applyStyle', {background: 'Green'}],
     )
-    return xx
 }
 
 function NAVBAR(...args) {
@@ -83,6 +82,70 @@ function FOOTER(...args) {
     )
 }
 
+uncheckable_CSSC = CSS_CLASS({
+    background: 'Grey',
+    color: 'Grey',
+    cursor: 'pointer',
+    textAlign: 'center'
+})
+
+unchecked_CSSC = CSS_CLASS({
+    background: 'Blue',
+    cursor: 'pointer',
+    textAlign: 'center'
+})
+
+checked_CSSC = CSS_CLASS({
+    background: 'Red',
+    cursor: 'pointer',
+    textAlign: 'center'
+})
+
+function CLICK_ROW(msg, a, b, start, end) {
+    return new HorizontalList(
+        new Text(
+            msg,
+            ['setAlignment', 1/2]
+        ),
+        new HorizontalChecklist(
+            ['setCheckboxClasses', uncheckable_CSSC, unchecked_CSSC, checked_CSSC],
+            ['setGapBetweenChildren', 0],
+            ... _.range(a, b).map((i) =>
+                new Checkbox(
+                    ['setInnerHTML', i],
+                    ['setCheckboxValue', (start <= i && i <= end) - 1] // Subtract 1 to ensure value is either -1 (uncheckable) or 1 (unchecked)
+                )
+            )
+        )
+    )
+}
+
+function CLICK_ROW_HEADER(msg, a, b, start, end) {
+    return new HorizontalList(
+        new Text(
+            msg,
+            ['setAlignment', 1/2]
+        ),
+        new HorizontalChecklist(
+            ['setCheckboxClasses', uncheckable_CSSC, unchecked_CSSC, checked_CSSC],
+            ['setGapBetweenChildren', 0],
+            ... _.range(a, b).map((i) =>
+                new Checkbox(
+                    ['setInnerHTML', i],
+                    ['setCheckboxValue', (start <= i && i <= end) - 1], // Subtract 1 to ensure value is either -1 (uncheckable) or 1 (unchecked)
+                    ['addEventListener', 'click', function() {
+                        let clickStack = this.findNode("clickStack")
+                        let nodes = clickStack.findNodes(this.SRUI_name)
+                        nodes.forEach((node) => {
+                            node.HTML_element.click()
+                        })
+                    }]
+                )
+            )
+        )
+    )
+}
+
 button_CSSC = CSS_CLASS({
     cursor: 'pointer',
     textAlign: 'center',
@@ -102,6 +165,12 @@ BODY(
         new Text(
             `Contrary to popular belief, Lorem Ipsum is not simply random text. It has roots in a piece of classical Latin literature from 45 BC, making it over 2000 years old. Richard McClintock, a Latin professor at Hampden-Sydney College in Virginia, looked up one of the more obscure Latin words, consectetur, from a Lorem Ipsum passage, and going through the cites of the word in classical literature, discovered the undoubtable source. Lorem Ipsum comes from sections 1.10.32 and 1.10.33 of "de Finibus Bonorum et Malorum" (The Extremes of Good and Evil) by Cicero, written in 45 BC. This book is a treatise on the theory of ethics, very popular during the Renaissance. The first line of Lorem Ipsum, "Lorem ipsum dolor sit amet..", comes from a line in section 1.10.32.`
         ),
+        new VerticalList(
+            ['setName', 'clickStack'],
+            CLICK_ROW_HEADER("Choose a year level:", 3, 12, 0, 12),
+            CLICK_ROW("Addition", 3, 12, 3, 7),
+            CLICK_ROW("Fractions", 3, 12, 5, 8),
+        ),    
     ),
     FOOTER(
         new Text(

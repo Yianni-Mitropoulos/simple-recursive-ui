@@ -2,19 +2,19 @@ SMALL_TIME_INCREMENT = 0
 
 /* Following function is by kigiri and Redoman. Source: https://stackoverflow.com/a/25873123 */
 function generateColor() {
-    return 'hsla(' + Math.floor(Math.random()*360) + ', 100%, 70%, 1)'
+    return 'hsla(' + Math.floor(Math.random() * 360) + ', 100%, 70%, 1)'
 }
 
 class Component {
+    init() {}
     constructor(...args) {
-        /* Get the tagName */
+        /* Construct a corresponding HTML element, or else use the document.body element */
         if (args.length !== 0 && args[0][0] === 'setTagName') {
             var tagName = args[0][1]
             args.shift()
         } else {
             var tagName = this.defaultTagName()
         }
-        /* Construct a corresponding HTML element, or else use the document.body element */
         if (tagName !== 'body') {
             this.HTML_element = document.createElement(tagName)
         } else {
@@ -34,11 +34,13 @@ class Component {
         this.setInnerHeightMinimum(0)
         this.setAlignment(0) // Determines how it sits inside the parent element
         this.setPadding(12)
+        this.setBorder(0)
         this.setGapBetweenChildren(12)
         this.applyStyle({background: generateColor()})
-        /* Search variables */
         this.properUndernodes = {}
         this.SRUI_name = undefined
+        /* Call the init function */
+        this.init(...args)
         /* Execute each argument as if it were a function */
         this.SRUI_do(...args)
     }
@@ -48,7 +50,6 @@ class Component {
     }
     SRUI_do(...args) {
         args.forEach((argument) => {
-            // console.log(argument)
             if (argument === undefined) {
                 throw "UndefinedValueError: You're probably missing a comma somewhere. The regex \\][\\n\\r\\s]+\\[ may help you find the problem."
             }
@@ -71,14 +72,16 @@ class Component {
     JS_forEachChild(f) {
         this.onAppend.add(f)
         this.children.forEach(f)
+        return this
     }
     SRUI_forEachChild(...args) {
         let f = (child) => {child.SRUI_do(...args)}
         this.onAppend.add(f)
         this.children.forEach(f)
+        return this
     }
     addEventListener(eventName, handler) {
-        this.HTML_element.addEventListener(eventName, handler)
+        this.HTML_element.addEventListener(eventName, handler.bind(this))
     }
     /* Methods for adjusting instance variables */
     setInnerWidthMinimum(w) {
@@ -123,6 +126,29 @@ class Component {
         this.paddingBottom = padding
         this.HTML_element.style.paddingBottom = `${padding}px` // Mainly useful for leaf nodes
     }
+    setBorder(border) {
+        this.borderTop    = border
+        this.borderBottom = border
+        this.borderLeft   = border
+        this.borderRight  = border
+        this.HTML_element.style.borderWidth = `${border}px` // Mainly useful for leaf nodes
+    }
+    setBorderTop(border) {
+        this.borderTop = border
+        this.HTML_element.style.borderTopWidth = `${border}px` // Mainly useful for leaf nodes
+    }
+    setBorderLeft(border) {
+        this.borderLeft = border
+        this.HTML_element.style.borderLeftWidth = `${border}px` // Mainly useful for leaf nodes
+    }
+    setBorderRight(border) {
+        this.borderRight = border
+        this.HTML_element.style.borderRightWidth = `${border}px` // Mainly useful for leaf nodes
+    }
+    setBorderBottom(border) {
+        this.borderBottom = border
+        this.HTML_element.style.borderBottomWidth = `${border}px` // Mainly useful for leaf nodes
+    }
     setGapBetweenChildren(gap) {
         this.gapBetweenChildren = gap
     }
@@ -160,8 +186,8 @@ class Component {
         })
         this.render() // Provided by the component type
     }
-    outerize(innerWidth) {return innerWidth + this.paddingLeft + this.paddingRight}
-    innerize(outerWidth) {return outerWidth - this.paddingLeft - this.paddingRight}
+    outerize(innerWidth) {return innerWidth + this.borderLeft + this.paddingLeft + this.paddingRight + this.borderRight}
+    innerize(outerWidth) {return outerWidth - this.borderLeft - this.paddingLeft - this.paddingRight - this.borderRight}
     computeWidths() { // innerWidthActualComputation
         this.setInnerWidthDesired(this.innerize(window.innerWidth)) // this.HTML_element.clientWidth
         this.computeWidths_initialize()
@@ -240,10 +266,11 @@ class Component {
     }
 
     setName(name) {
+        console.log(this, name)
         this.SRUI_name = name
     }
 
-    findNode(SRUI_name) {
+    findNodes(SRUI_name) {
         let retval = undefined
         this.forEachAncestor((ancestor) => {
             if (retval !== undefined) {
@@ -251,14 +278,21 @@ class Component {
             }
             let undernodeList = ancestor.properUndernodes[SRUI_name]
             if (undernodeList !== undefined && undernodeList.length !== 0) {
-                if (undernodeList.length == 1) {
-                    retval = undernodeList[0]
-                } else {
-                    throw "There's more than one undernode with that name!"
-                }
+                retval = undernodeList
             }
         })
         return retval
+    }
+
+    findNode(SRUI_name) {
+        let undernodeList = this.findNodes(SRUI_name)
+        if (undernodeList === undefined || undernodeList.length === 0) {
+            throw "I can't find any nodes with that name."
+        } else if (undernodeList.length == 1) {
+            return undernodeList[0]
+        } else {
+            throw "There's more than one undernode with that name."
+        }
     }
 
 }
@@ -332,21 +366,31 @@ class HorizontalComponent extends Component {
                     widenableChildren.forEach((child) => {
                         child.innerWidthActual += reduced_dmin
                     })
-                }    
+                    // Single pixel trick
+                    extraWidthAvailable = extraWidthAvailable - reduced_dmin*widenableChildren.size
+                    widenableChildren.forEach((child) => {
+                        if (extraWidthAvailable > 1) {
+                            child.innerWidthActual += 1
+                            extraWidthAvailable    -= 1
+                        }
+                    })
+                }
             }
         }
     }
 }
 
 class VerticalList extends VerticalComponent {
+    init(...args) {
+        this.listOfChildren = []
+    }
     append(child) {
-        if (this.listOfChildren === undefined) {
-            this.listOfChildren = []
-        }
         this.listOfChildren.push(child)
         super.append(child)
     }
-    defaultTagName() {return 'div'}
+    defaultTagName() {
+        return 'div'
+    }
     render() {
         /* Align child nodes appropriately */
         this.children.forEach((child) => {
@@ -373,23 +417,17 @@ class VerticalList extends VerticalComponent {
 }
 
 class HorizontalList extends HorizontalComponent {
+    init(...args) {
+        this.leftChildren  = []
+        this.rightChildren = []
+        this.currentAppendSide = this.leftChildren
+        this.otherAppendSide   = this.rightChildren
+    }
     append(child) {
-        if (this.currentAppendSide === undefined) {
-            this.leftChildren  = []
-            this.rightChildren = []
-            this.currentAppendSide = this.leftChildren
-            this.otherAppendSide   = this.rightChildren
-        }
         this.currentAppendSide.push(child)
         super.append(child)
     }
     toggleAppendSide() {
-        if (this.currentAppendSide === undefined) {
-            this.leftChildren  = []
-            this.rightChildren = []
-            this.currentAppendSide = this.leftChildren
-            this.otherAppendSide   = this.rightChildren
-        }
         let temp = this.currentAppendSide
         this.currentAppendSide = this.otherAppendSide
         this.otherAppendSide = temp
@@ -415,7 +453,6 @@ class HorizontalList extends HorizontalComponent {
                     flag = true
                 }
                 innerHeight = Math.max(innerHeight, child.HTML_element.offsetHeight) // This line seems suspect. Maybe don't use child.offsetHeight here
-                console.log(count, x)
                 if (count === 0) {
                     child.HTML_element.style.left = `${x}px`
                 } else {
@@ -457,6 +494,80 @@ class Image extends LeafComponent {
         /*img.addEventListener('error', function() {
             alert('error')
         })*/
+    }
+}
+
+/* Checkboxes and Checklists */
+
+class Checkbox extends Button {
+    init() {
+        this.checkboxValue = 0
+    }
+    applyAppropriateClass() {
+        switch (this.checkboxValue) {
+            case -1:
+                this.toggleClass(this.uncheckableClass)
+                break;
+            case 0:
+                this.toggleClass(this.uncheckedClass)
+                break;
+            case 1:
+                this.toggleClass(this.checkedClass)
+                break;
+            default:
+                throw "INVALID_CHECKBOX_VALUE"
+        }
+    }
+    setCheckboxClasses(uncheckableClass, uncheckedClass, checkedClass) {
+        this.uncheckableClass = uncheckableClass
+        this.uncheckedClass   = uncheckedClass
+        this.checkedClass     = checkedClass
+        this.applyStyle({background: null})
+        this.applyAppropriateClass()
+    }
+    toggleCheckbox() {
+        if (this.checkboxValue === 0 || this.checkboxValue === 1) {
+            this.checkboxValue = 1 - this.checkboxValue
+            this.toggleClass(this.uncheckedClass, this.checkedClass)
+        }
+    }
+    setCheckboxValue(value) {
+        this.checkboxValue = value
+        this.HTML_element.removeAttribute('class')
+        this.applyAppropriateClass()
+    }
+}
+
+class HorizontalChecklist extends HorizontalList {
+    init(...args) {
+        super.init(...args)
+        this.JS_forEachChild((child) => {
+            child.SRUI_do(
+                ['setName', this.leftChildren.length + this.rightChildren.length - 1], // Subtract 1 to account for the latest node that's being added
+                ['addEventListener', 'click', function() {
+                    for (let j=this.SRUI_name - 1; j>=0; j--) {
+                        let node = this.findNode(j)
+                        if (node.checkboxValue == 0 || node.checkboxValue == 1) {
+                            node.setCheckboxValue(0)
+                        }
+                    }
+                    for (let j=this.SRUI_name; j<this.parent.leftChildren.length + this.parent.rightChildren.length; j++) {
+                        let node = this.findNode(j)
+                        if (node.checkboxValue == 0 || node.checkboxValue == 1) {
+                            node.setCheckboxValue(1)
+                        }
+                    }
+                }]
+            )
+        })
+    }
+    setCheckboxClasses(uncheckableClass, uncheckedClass, checkedClass) {
+        this.uncheckableClass = uncheckableClass
+        this.uncheckedClass   = uncheckedClass
+        this.checkedClass     = checkedClass
+        this.SRUI_forEachChild(
+            ['setCheckboxClasses', uncheckableClass, uncheckedClass, checkedClass],
+        )
     }
 }
 
