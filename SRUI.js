@@ -538,9 +538,10 @@ class Checkbox extends Button {
     }
 }
 
-class HorizontalChecklist extends HorizontalList {
+class ClickRow extends HorizontalList {
     init(...args) {
         super.init(...args)
+        this.clickRowHeader = false
         this.JS_forEachChild((child) => {
             child.SRUI_do(
                 ['setName', this.leftChildren.length + this.rightChildren.length - 1], // Subtract 1 to account for the latest node that's being added
@@ -559,6 +560,18 @@ class HorizontalChecklist extends HorizontalList {
                     }
                 }]
             )
+            if (!this.clickRowHeader) {
+                return
+            }
+            child.SRUI_do(
+                ['addEventListener', 'click', function() {
+                    let clickStack = this.findNode("clickStack")
+                    let nodes = clickStack.findNodes(this.SRUI_name)
+                    nodes.forEach((node) => {
+                        node.HTML_element.click()
+                    })
+                }]
+            )
         })
     }
     setCheckboxClasses(uncheckableClass, uncheckedClass, checkedClass) {
@@ -568,6 +581,17 @@ class HorizontalChecklist extends HorizontalList {
         this.SRUI_forEachChild(
             ['setCheckboxClasses', uncheckableClass, uncheckedClass, checkedClass],
         )
+    }
+    setHeaderStatus(status) {
+        if (status === undefined) {status = false}
+        this.clickRowHeader = status
+    }
+}
+
+class ClickStack extends VerticalList {
+    init(...args) {
+        super.init(...args)
+        this.setName("clickStack")
     }
 }
 
