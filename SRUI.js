@@ -166,12 +166,6 @@ class Component {
     setInnerHTML(msg) {
         this.HTML_element.innerHTML = msg + '&#8203;' // Prevents selections at the end of one paragraph from bleeding over into the next paragraph
     }
-    setValue(val) {
-        this.HTML_element.value = value
-    }
-    getValue() {
-        return this.HTML_element.value
-    }
 
     /* 
      * Render methods
@@ -505,6 +499,15 @@ class Image extends LeafComponent {
 class TextInput extends LeafComponent {
     defaultTagName() {return 'input'}
     init() {this.HTML_element.setAttribute('type', 'text')}
+    getValue() {
+        return this.HTML_element.value
+    }
+    setValue(value) {
+        this.HTML_element.value = value
+    }
+    setPlaceholder(placeholder) {
+        this.HTML_element.setAttribute('placeholder', placeholder)
+    }
 }
 
 /* Checkboxes and Checklists */

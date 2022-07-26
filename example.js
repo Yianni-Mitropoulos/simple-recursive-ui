@@ -149,7 +149,8 @@ BODY(
         new VerticalList(
             new HorizontalList(
                 new TextInput(
-                    ['setName', 'inputArea']
+                    ['setName', 'inputArea'],
+                    ['setPlaceholder', "Type some text here."]
                 ),
                 new Button(
                     "Append",
