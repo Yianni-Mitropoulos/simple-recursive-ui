@@ -381,7 +381,7 @@ class HorizontalComponent extends Component {
 }
 
 class VerticalList extends VerticalComponent {
-    init(...args) {
+    init() {
         this.listOfChildren = []
     }
     append(child) {
@@ -417,7 +417,7 @@ class VerticalList extends VerticalComponent {
 }
 
 class HorizontalList extends HorizontalComponent {
-    init(...args) {
+    init() {
         this.leftChildren  = []
         this.rightChildren = []
         this.currentAppendSide = this.leftChildren
