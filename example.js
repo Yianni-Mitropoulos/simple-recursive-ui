@@ -146,6 +146,28 @@ BODY(
         new Button('B3'),
     ),
     MAIN(
+        new VerticalList(
+            new HorizontalList(
+                new TextInput(
+                    ['setName', 'inputArea']
+                ),
+                new Button(
+                    "Append",
+                    ['toggleClass', button_CSSC],
+                    ['setInnerWidth', 50],
+                    ['addEventListener', 'click', function() {
+                        let inputArea  = this.findNode('inputArea')
+                        let outputArea = this.findNode('outputArea')
+                        let inputText  = inputArea.getValue()
+                        outputArea.append(new Text(inputText))
+                        SRUI_body.renderDescendants()
+                    }]
+                )
+            ),
+            new VerticalList(
+                ['setName', 'outputArea'],
+            )
+        ),
         new Text(
             "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.",
         ),

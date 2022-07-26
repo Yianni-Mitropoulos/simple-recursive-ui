@@ -19,7 +19,7 @@ class Component {
             this.HTML_element = document.createElement(tagName)
         } else {
             this.HTML_element = document.body
-            window.SRUI_bodyComponent = this // Set up a global variable for the end-user of the library
+            window.SRUI_body = this // Set up a global variable for the end-user of the library
             addEventListener('resize',
                 this.renderDescendants.bind(this)
             )
@@ -165,6 +165,12 @@ class Component {
     }
     setInnerHTML(msg) {
         this.HTML_element.innerHTML = msg + '&#8203;' // Prevents selections at the end of one paragraph from bleeding over into the next paragraph
+    }
+    setValue(val) {
+        this.HTML_element.value = value
+    }
+    getValue() {
+        return this.HTML_element.value
     }
 
     /* 
@@ -475,6 +481,8 @@ class HorizontalList extends HorizontalComponent {
     }
 }
 
+/* Leaves */
+
 class Text extends LeafComponent {
     defaultTagName() {return 'p'}
 }
@@ -489,12 +497,14 @@ class Image extends LeafComponent {
         this.HTML_element.src = src
         this.HTML_element.alt = alt
         this.HTML_element.addEventListener('load', () => {
-            SRUI_bodyComponent.renderDescendants()
+            SRUI_body.renderDescendants()
         })
-        /*img.addEventListener('error', function() {
-            alert('error')
-        })*/
     }
+}
+
+class TextInput extends LeafComponent {
+    defaultTagName() {return 'input'}
+    init() {this.HTML_element.setAttribute('type', 'text')}
 }
 
 /* Checkboxes and Checklists */
