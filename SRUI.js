@@ -51,7 +51,7 @@ class Component {
     SRUI_do(...args) {
         args.forEach((argument) => {
             if (argument === undefined) {
-                throw "UndefinedValueError: You're probably missing a comma somewhere. The regex \\][\\n\\r\\s]+\\[ may help you find the problem."
+                throw "UndefinedValueError: You're probably missing a comma somewhere, or perhaps a return keyword. The regex \\][\\n\\r\\s]+\\[ may help you find missing commas."
             }
             else if (argument instanceof Component) {
                 this.append(argument)
