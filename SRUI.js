@@ -5,6 +5,8 @@ function generateColor() {
     return 'hsla(' + Math.floor(Math.random() * 360) + ', 100%, 70%, 1)'
 }
 
+stickySet = new Set()
+
 class Component {
     init() {}
     constructor(...args) {
@@ -166,7 +168,21 @@ class Component {
     setInnerHTML(msg) {
         this.HTML_element.innerHTML = msg + '&#8203;' // Prevents selections at the end of one paragraph from bleeding over into the next paragraph
     }
-
+    makeSticky() {
+        stickySet.add(this)
+        document.addEventListener('scroll', () => {
+            if (this.HTML_element_fixed !== undefined) {
+                let y = this.HTML_element.getBoundingClientRect()["y"]
+                if (y < 0) {
+                    // this.HTML_element.style.display = 'none'
+                    this.HTML_element_fixed.style.display = 'initial'
+                } else {
+                    // this.HTML_element.style.display = 'initial'
+                    this.HTML_element_fixed.style.display = 'none'
+                }    
+            }
+        })
+    }
     /* 
      * Render methods
      *
@@ -175,10 +191,27 @@ class Component {
      */
 
     renderDescendants() {
+        /* Render objects in main flow of document */
         this.computeWidths()
         setTimeout(() => {
             this.computeEverythingElse()
         }, SMALL_TIME_INCREMENT)
+        /* Implement stickiness */
+        stickySet.forEach((node) => {
+            try {
+                var display_style = node.HTML_element_fixed.style.display
+                node.HTML_element_fixed.remove()
+            } catch {}
+            node.HTML_element_fixed = node.HTML_element.cloneNode(true)
+            node.HTML_element_fixed.style.position = 'fixed'
+            node.HTML_element_fixed.style.zIndex   = 1
+            if (display_style !== undefined) {
+                node.HTML_element_fixed.style.display = display_style
+            } else {
+                node.HTML_element_fixed.style.display = 'none'
+            }
+            document.body.appendChild(node.HTML_element_fixed)
+        })
     }
     computeEverythingElse() {
         this.children.forEach((child) => {
@@ -266,7 +299,6 @@ class Component {
     }
 
     setName(name) {
-        console.log(this, name)
         this.SRUI_name = name
     }
 
