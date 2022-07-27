@@ -205,6 +205,7 @@ class Component {
             node.HTML_element_fixed = node.HTML_element.cloneNode(true)
             node.HTML_element_fixed.style.position = 'fixed'
             node.HTML_element_fixed.style.zIndex   = 1
+            node.HTML_element_fixed.style.top = 0
             if (display_style !== undefined) {
                 node.HTML_element_fixed.style.display = display_style
             } else {

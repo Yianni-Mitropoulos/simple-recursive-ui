@@ -45,6 +45,7 @@ function NAVBAR(...args) {
     return new VerticalList(
         ['setPadding', 0],
         ['applyStyle', {background: 'Blue'}],
+        ['makeSticky'],
         new HorizontalList(
             ['toggleAppendSide'],
             ['setAlignment', 1/2],
@@ -144,7 +145,6 @@ BODY(
         new Button('B1'),
         new Button('B2'),
         new Button('B3'),
-        ['makeSticky'],
     ),
     MAIN(
         new VerticalList(
