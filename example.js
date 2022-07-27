@@ -148,6 +148,13 @@ BODY(
     MAIN(
         new VerticalList(
             new HorizontalList(
+                ['setGapBetweenChildren', 30],
+                new TextInput(['setPlaceholder', 'foo'], ['applyStyle', {textAlign: "center"}]),
+                new TextInput(['setPlaceholder', 'bar'], ['applyStyle', {textAlign: "center"}])
+            ),
+        ),
+        new VerticalList(
+            new HorizontalList(
                 new TextInput(
                     ['setName', 'inputArea'],
                     ['setPlaceholder', "Type some text here."]

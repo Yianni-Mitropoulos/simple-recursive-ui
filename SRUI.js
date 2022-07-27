@@ -506,7 +506,14 @@ class TextInput extends LeafComponent {
         this.HTML_element.value = value
     }
     setPlaceholder(placeholder) {
+        this.placeholder = placeholder
         this.HTML_element.setAttribute('placeholder', placeholder)
+        this.addEventListener('focus', () => {
+            this.HTML_element.setAttribute('placeholder', '')
+        })
+        this.addEventListener('blur',  () => {
+            this.HTML_element.setAttribute('placeholder', this.placeholder)
+        })
     }
 }
 
