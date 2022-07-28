@@ -62,7 +62,7 @@ class Component {
     JS_do(f) {
         f.bind(this)()
     }
-    SRUI_do_individual(argument) {
+    SRUI_do_individual_action(argument) {
         if (argument === undefined) {
             throw "UndefinedValueError: You're probably missing a comma somewhere, or perhaps a return keyword. The regex \\][\\n\\r\\s]+\\[ may help you find missing commas."
         }
@@ -82,7 +82,7 @@ class Component {
         }
     }
     SRUI_do(...args) {
-        args.forEach((argument) => this.SRUI_do_individual(argument))
+        args.forEach((argument) => this.SRUI_do_individual_action(argument))
     }
     JS_forEachChild(f) {
         this.onAppend.add(f)
@@ -97,7 +97,7 @@ class Component {
     }
     if(condition, ...args) {
         if (condition) {
-            this.SRUI_do_individual([...args])
+            this.SRUI_do_individual_action([...args])
         }
     }
     addEventListener(eventName, handler) {
@@ -457,7 +457,7 @@ class VerticalList extends VerticalComponent {
             let x = this.paddingLeft + (this.innerWidthActual - child.outerize(child.innerWidthActual))*child.alignment
             child.setAbsoluteLeft(x)
         })
-        let height = this.paddingTop
+        let height = this.borderTop + this.paddingTop
         let flag = false
         this.listOfChildren.forEach((child) => {
             /* Height of parent element */
@@ -470,7 +470,7 @@ class VerticalList extends VerticalComponent {
             height += child.HTML_element.offsetHeight
         })
         /* Set the height of the current component */
-        height += this.paddingBottom
+        height += this.paddingBottom + this.borderBottom
         this.HTML_element.style.height = `${height}px`
         super.render() // Must be at end
     }
@@ -536,10 +536,10 @@ class HorizontalList extends HorizontalComponent {
         while (count < 2) {
             if (count === 0) {
                 var listOfChildren = this.childrenPair[0]
-                var x = this.paddingLeft
+                var x = this.paddingLeft + this.borderLeft
             } else {
                 var listOfChildren = this.childrenPair[1]
-                var x = this.paddingRight
+                var x = this.paddingRight + this.borderRight
             }
             let flag = false
             listOfChildren.forEach((child) => {
@@ -564,7 +564,7 @@ class HorizontalList extends HorizontalComponent {
         this.HTML_element.style.height = `${outerHeight}px`
         /* Set y values of children */
         this.children.forEach((child) => {
-            let y = this.paddingTop + (innerHeight - child.HTML_element.offsetHeight)*child.alignment
+            let y = this.paddingTop + this.borderTop + (innerHeight - child.HTML_element.offsetHeight) * child.alignment
             child.setAbsoluteTop(y)
         })
         super.render() // Must be at end
