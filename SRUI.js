@@ -38,6 +38,7 @@ class Component {
         this.setPadding(12)
         this.setBorder(0)
         this.setGapBetweenChildren(12)
+        this.setAbsoluteTop(0)
         this.applyStyle({background: generateColor()})
         this.properUndernodes = {}
         this.SRUI_name = undefined
@@ -170,13 +171,42 @@ class Component {
     }
     setAbsoluteTop(top) {
         this.absoluteTop = top
+        this.HTML_element.style.top = `${top}px`
     }
     setAbsoluteLeft(left) {
-        this.absoluteLeft = left
+        this.absoluteLeft  = left
+        this.absoluteRight = undefined
+        this.HTML_element.style.left = `${left}px`
+    }
+    getFixedTop() {
+        let retval = 0
+        this.forEachAncestor((ancestor) => {
+            retval += ancestor.absoluteTop
+        })
+        return retval    
+    }
+    setAbsoluteRight(right) {
+        this.absoluteLeft  = undefined
+        this.absoluteRight = right
+        this.HTML_element.style.right = `${right}px`
     }
     makeSticky() {
         stickySet.add(this)
+        window.addEventListener('scroll', this.stickinessHandler.bind(this))
     }
+    stickinessHandler() {
+        let page_y = window.pageYOffset
+        let node_y = this.getFixedTop()
+        if (page_y > node_y) {
+            this.HTML_element.style.position = 'fixed'
+            this.HTML_element.style.top = `0`
+            this.HTML_element.style.zIndex = `1000`
+        } else {
+            this.HTML_element.style.position = 'absolute'
+            this.HTML_element.style.top = `${node_y}px`
+        }
+    }
+
     /* 
      * Render methods
      *
@@ -189,32 +219,10 @@ class Component {
         this.computeWidths()
         setTimeout(() => {
             this.computeEverythingElse()
+            stickySet.forEach((node) => {
+                node.stickinessHandler()
+            })
         }, SMALL_TIME_INCREMENT)
-        stickySet.forEach((node) => {
-            node.nonstickyTop = node.HTML_element.style.top
-            console.log(node.nonstickyTop)
-        })
-        /* Implement stickiness */
-        /*
-        stickySet.forEach((node) => {
-            console.log('foo')
-            try {
-                var display_style = node.HTML_element_fixed.style.display
-                node.HTML_element_fixed.remove()
-            } catch {
-            }
-            node.HTML_element_fixed = node.HTML_element.cloneNode(true)
-            node.HTML_element_fixed.style.position = 'fixed'
-            node.HTML_element_fixed.style.zIndex   = 1
-            node.HTML_element_fixed.style.top      = 0
-            if (display_style !== undefined) {
-                node.HTML_element_fixed.style.display = display_style
-            } else {
-                node.HTML_element_fixed.style.display = 'none'
-            }
-            document.body.appendChild(node.HTML_element_fixed)
-        })
-        */
     }
     computeEverythingElse() {
         this.children.forEach((child) => {
@@ -430,7 +438,7 @@ class VerticalList extends VerticalComponent {
         /* Align child nodes appropriately */
         this.children.forEach((child) => {
             let x = this.paddingLeft + (this.innerWidthActual - child.outerize(child.innerWidthActual))*child.alignment
-            child.HTML_element.style.left = `${x}px`
+            child.setAbsoluteLeft(x)
         })
         let height = this.paddingTop
         let flag = false
@@ -441,7 +449,7 @@ class VerticalList extends VerticalComponent {
             } else {
                 flag = true
             }
-            child.HTML_element.style.top = `${height}px`
+            child.setAbsoluteTop(height)
             height += child.HTML_element.offsetHeight
         })
         /* Set the height of the current component */
@@ -489,9 +497,9 @@ class HorizontalList extends HorizontalComponent {
                 }
                 innerHeight = Math.max(innerHeight, child.HTML_element.offsetHeight) // This line seems suspect. Maybe don't use child.offsetHeight here
                 if (count === 0) {
-                    child.HTML_element.style.left = `${x}px`
+                    child.setAbsoluteLeft(x)
                 } else {
-                    child.HTML_element.style.right = `${x}px`
+                    child.setAbsoluteRight(x)
                 }
                 x += child.HTML_element.offsetWidth
             })
@@ -504,7 +512,7 @@ class HorizontalList extends HorizontalComponent {
         /* Set y values of children */
         this.children.forEach((child) => {
             let y = this.paddingTop + (innerHeight - child.HTML_element.offsetHeight)*child.alignment
-            child.HTML_element.style.top = `${y}px`
+            child.setAbsoluteTop(y)
         })
         super.render() // Must be at end
     }
