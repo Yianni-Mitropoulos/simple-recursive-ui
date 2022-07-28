@@ -62,26 +62,27 @@ class Component {
     JS_do(f) {
         f.bind(this)()
     }
+    SRUI_do_individual(argument) {
+        if (argument === undefined) {
+            throw "UndefinedValueError: You're probably missing a comma somewhere, or perhaps a return keyword. The regex \\][\\n\\r\\s]+\\[ may help you find missing commas."
+        }
+        else if (argument instanceof Component) {
+            this.append(argument)
+        } else if (typeof argument === 'string') {
+            this.setInnerHTML(argument)
+        } else {
+            try {
+                /* If it's an instruction, execute it */
+                var opname = argument[0]
+                let remaining_params = argument.slice(1)
+                this[opname](...remaining_params)
+            } catch {
+                console.log(`Problem with [${argument}] on the following component:`, this)
+            }
+        }
+    }
     SRUI_do(...args) {
-        args.forEach((argument) => {
-            if (argument === undefined) {
-                throw "UndefinedValueError: You're probably missing a comma somewhere, or perhaps a return keyword. The regex \\][\\n\\r\\s]+\\[ may help you find missing commas."
-            }
-            else if (argument instanceof Component) {
-                this.append(argument)
-            } else if (typeof argument === 'string') {
-                this.setInnerHTML(argument)
-            } else {
-                try {
-                    /* If it's an instruction, execute it */
-                    var opname = argument[0]
-                    let remaining_params = argument.slice(1)
-                    this[opname](...remaining_params)
-                } catch {
-                    console.log(`Problem with [${argument}] on the following component:`, this)
-                }
-            }
-        })
+        args.forEach((argument) => this.SRUI_do_individual(argument))
     }
     JS_forEachChild(f) {
         this.onAppend.add(f)
@@ -93,6 +94,11 @@ class Component {
         this.onAppend.add(f)
         this.children.forEach(f)
         return this
+    }
+    if(condition, ...args) {
+        if (condition) {
+            this.SRUI_do_individual([...args])
+        }
     }
     addEventListener(eventName, handler) {
         this.HTML_element.addEventListener(eventName, handler.bind(this))

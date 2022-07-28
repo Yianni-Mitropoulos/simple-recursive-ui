@@ -188,7 +188,7 @@ BODY(
     FOOTER(
         new Text(
             "Left footer section",
-            ["setName", "leftFooterElement"]
+            ["setName", "leftFooterElement"],
         ),
         new Text(
             "Right footer section"
