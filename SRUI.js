@@ -7,6 +7,13 @@ function generateColor() {
 
 stickySet = new Set()
 
+current_id = 0
+function next_id() {
+    let retval = current_id
+    current_id += 1
+    return retval
+}
+
 class Component {
     init() {}
     constructor(...args) {
@@ -29,6 +36,10 @@ class Component {
                 () => this.renderDescendants(),
             SMALL_TIME_INCREMENT)
         }
+        /* Make inspectable */
+        let id = `SRUI_Node_${next_id()}`
+        window[id] = this
+        this.HTML_element.setAttribute('id', id)
         /* Initialize variables */
         this.children = new Set()
         this.onAppend = new Set()
