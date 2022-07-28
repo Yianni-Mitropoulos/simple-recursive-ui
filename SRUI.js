@@ -168,20 +168,14 @@ class Component {
     setInnerHTML(msg) {
         this.HTML_element.innerHTML = msg + '&#8203;' // Prevents selections at the end of one paragraph from bleeding over into the next paragraph
     }
+    setAbsoluteTop(top) {
+        this.absoluteTop = top
+    }
+    setAbsoluteLeft(left) {
+        this.absoluteLeft = left
+    }
     makeSticky() {
         stickySet.add(this)
-        document.addEventListener('scroll', () => {
-            if (this.HTML_element_fixed !== undefined) {
-                let y = this.HTML_element.getBoundingClientRect()["y"]
-                if (y < 0) {
-                    // this.HTML_element.style.display = 'none'
-                    this.HTML_element_fixed.style.display = 'initial'
-                } else {
-                    // this.HTML_element.style.display = 'initial'
-                    this.HTML_element_fixed.style.display = 'none'
-                }    
-            }
-        })
     }
     /* 
      * Render methods
@@ -196,16 +190,23 @@ class Component {
         setTimeout(() => {
             this.computeEverythingElse()
         }, SMALL_TIME_INCREMENT)
-        /* Implement stickiness */
         stickySet.forEach((node) => {
+            node.nonstickyTop = node.HTML_element.style.top
+            console.log(node.nonstickyTop)
+        })
+        /* Implement stickiness */
+        /*
+        stickySet.forEach((node) => {
+            console.log('foo')
             try {
                 var display_style = node.HTML_element_fixed.style.display
                 node.HTML_element_fixed.remove()
-            } catch {}
+            } catch {
+            }
             node.HTML_element_fixed = node.HTML_element.cloneNode(true)
             node.HTML_element_fixed.style.position = 'fixed'
             node.HTML_element_fixed.style.zIndex   = 1
-            node.HTML_element_fixed.style.top = 0
+            node.HTML_element_fixed.style.top      = 0
             if (display_style !== undefined) {
                 node.HTML_element_fixed.style.display = display_style
             } else {
@@ -213,6 +214,7 @@ class Component {
             }
             document.body.appendChild(node.HTML_element_fixed)
         })
+        */
     }
     computeEverythingElse() {
         this.children.forEach((child) => {
