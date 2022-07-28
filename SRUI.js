@@ -560,7 +560,7 @@ class HorizontalList extends HorizontalComponent {
         }
         /* Set height of the current element */
         innerHeight = Math.max(innerHeight, this.innerHeightMinimum) // This line seems suspect.
-        let outerHeight = innerHeight + this.paddingTop + this.paddingBottom
+        let outerHeight = innerHeight + this.paddingTop + this.paddingBottom + this.borderTop + this.borderBottom
         this.HTML_element.style.height = `${outerHeight}px`
         /* Set y values of children */
         this.children.forEach((child) => {
