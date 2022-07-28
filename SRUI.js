@@ -457,7 +457,7 @@ class VerticalList extends VerticalComponent {
             let x = this.paddingLeft + (this.innerWidthActual - child.outerize(child.innerWidthActual))*child.alignment
             child.setAbsoluteLeft(x)
         })
-        let height = this.borderTop + this.paddingTop
+        let height = this.paddingTop
         let flag = false
         this.listOfChildren.forEach((child) => {
             /* Height of parent element */
@@ -470,7 +470,7 @@ class VerticalList extends VerticalComponent {
             height += child.HTML_element.offsetHeight
         })
         /* Set the height of the current component */
-        height += this.paddingBottom + this.borderBottom
+        height += this.borderTop + this.paddingBottom + this.borderBottom
         this.HTML_element.style.height = `${height}px`
         super.render() // Must be at end
     }
