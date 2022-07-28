@@ -461,19 +461,55 @@ class VerticalList extends VerticalComponent {
 
 class HorizontalList extends HorizontalComponent {
     init() {
-        this.leftChildren  = []
-        this.rightChildren = []
-        this.currentAppendSide = this.leftChildren
-        this.otherAppendSide   = this.rightChildren
+        this.currentAppendSide = 0
+        this.childrenPair = [[], []]
+        this.onAppendPair = [new Set(), new Set()]
+    }
+    JS_forEachLeftChild(f) {
+        this.onAppendPair[0].add(f)
+        this.childrenPair[0].forEach(f)
+        return this
+    }
+    SRUI_forEachLeftChild(...args) {
+        let f = (child) => {child.SRUI_do(...args)}
+        this.onAppendPair[0].add(f)
+        this.childrenPair[0].forEach(f)
+        return this
+    }
+    JS_forEachRightChild(f) {
+        this.onAppendPair[1].add(f)
+        this.childrenPair[1].forEach(f)
+        return this
+    }
+    SRUI_forEachRightChild(...args) {
+        let f = (child) => {child.SRUI_do(...args)}
+        this.onAppendPair[1].add(f)
+        this.childrenPair[1].forEach(f)
+        return this
+    }
+    appendLeft(child) {
+        super.append(child)
+        this.childrenPair[0].push(child)
+        this.onAppendPair[0].forEach((handler) => {
+            handler(child)
+        })
+    }
+    appendRight(child) {
+        super.append(child)
+        this.childrenPair[1].push(child)
+        this.onAppendPair[1].forEach((handler) => {
+            handler(child)
+        })
     }
     append(child) {
-        this.currentAppendSide.push(child)
-        super.append(child)
+        if (this.currentAppendSide === 0) {
+            this.appendLeft(child)
+        } else {
+            this.appendRight(child)
+        }
     }
     toggleAppendSide() {
-        let temp = this.currentAppendSide
-        this.currentAppendSide = this.otherAppendSide
-        this.otherAppendSide = temp
+        this.currentAppendSide = 1 - this.currentAppendSide
     }
     defaultTagName() {return 'span'}
     render() {
@@ -482,10 +518,10 @@ class HorizontalList extends HorizontalComponent {
         let count = 0
         while (count < 2) {
             if (count === 0) {
-                var listOfChildren = this.leftChildren
+                var listOfChildren = this.childrenPair[0]
                 var x = this.paddingLeft
             } else {
-                var listOfChildren = this.rightChildren
+                var listOfChildren = this.childrenPair[1]
                 var x = this.paddingRight
             }
             let flag = false
@@ -607,7 +643,7 @@ class ClickRow extends HorizontalList {
         this.clickRowHeader = false
         this.JS_forEachChild((child) => {
             child.SRUI_do(
-                ['setName', this.leftChildren.length + this.rightChildren.length - 1], // Subtract 1 to account for the latest node that's being added
+                ['setName', child.parent.children.size - 1], // Subtract 1 to account for the latest node that's being added
                 ['addEventListener', 'click', function() {
                     for (let j=this.SRUI_name - 1; j>=0; j--) {
                         let node = this.findNode(j)
@@ -615,7 +651,7 @@ class ClickRow extends HorizontalList {
                             node.setCheckboxValue(0)
                         }
                     }
-                    for (let j=this.SRUI_name; j<this.parent.leftChildren.length + this.parent.rightChildren.length; j++) {
+                    for (let j=this.SRUI_name; j<child.parent.children.size; j++) {
                         let node = this.findNode(j)
                         if (node.checkboxValue == 0 || node.checkboxValue == 1) {
                             node.setCheckboxValue(1)
