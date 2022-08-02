@@ -28,6 +28,7 @@ class Component {
             this.HTML_element = document.createElement(tagName)
         } else {
             this.HTML_element = document.body
+            this.setAbsoluteTop(0)  // Without this line, stickiness seems not to work
             window.SRUI_body = this // Set up a global variable for the end-user of the library
             addEventListener('resize',
                 this.renderDescendants.bind(this)
@@ -45,12 +46,10 @@ class Component {
         this.onAppend = new Set()
         this.setInnerWidth(0, Number.POSITIVE_INFINITY)
         this.setInnerHeightMinimum(0)
-        this.setAlignment(0) // Determines how it sits inside the parent element
-        this.setPadding(12)
+        this.setAlignment(0)   // Determines how it sits inside the parent element
+        this.setMargin(0)
+        this.setPadding(0)
         this.setBorder(0)
-        this.setGapBetweenChildren(12)
-        this.setAbsoluteTop(0)
-        this.applyStyle({background: generateColor()})
         this.properUndernodes = {}
         this.SRUI_name = undefined
         /* Call the init function */
@@ -103,7 +102,7 @@ class Component {
     addEventListener(eventName, handler) {
         this.HTML_element.addEventListener(eventName, handler.bind(this))
     }
-    /* Methods for adjusting instance variables */
+    /* Inner width */
     setInnerWidthMinimum(w) {
         this.innerWidthMinimum = w
     }
@@ -117,18 +116,56 @@ class Component {
         this.innerWidthMinimum = w0
         this.innerWidthDesired = w1
     }
+    /* Outer width stuff (kind of a hack) */
+    setOuterWidthMinimum(w) {
+        this.innerWidthMinimum = this.innerize(w)
+    }
+    setOuterWidthDesired(w) {
+        this.innerWidthDesired = this.innerize(w)
+    }
+    setOuterWidth(w0, w1) {
+        if (w1 === undefined) {
+            w1 = w0
+        }
+        this.innerWidthMinimum = this.innerize(w0)
+        this.innerWidthDesired = this.innerize(w1)
+    }
+    /* Inner height */
     setInnerHeightMinimum(h) {
         this.innerHeightMinimum = h
     }
     setAlignment(alignment) {
         this.alignment = alignment
     }
+    /* Margin */
+    setMargin(margin) {
+        this.marginTop    = margin
+        this.marginBottom = margin
+        this.marginLeft   = margin
+        this.marginRight  = margin
+    }
+    setMarginTop(margin) {
+        this.marginTop = margin
+    }
+    setMarginLeft(margin) {
+        this.marginLeft = margin
+    }
+    setMarginRight(margin) {
+        this.marginRight = margin
+    }
+    setMarginBottom(margin) {
+        this.marginBottom = margin
+    }
+    /* Padding */
     setPadding(padding) {
         this.paddingTop    = padding
         this.paddingBottom = padding
         this.paddingLeft   = padding
         this.paddingRight  = padding
         this.HTML_element.style.padding = `${padding}px` // Mainly useful for leaf nodes
+        if (padding !== 0 && this.HTML_element.style.background === '') {
+            this.applyStyle({background: generateColor()})
+        }
     }
     setPaddingTop(padding) {
         this.paddingTop = padding
@@ -146,12 +183,21 @@ class Component {
         this.paddingBottom = padding
         this.HTML_element.style.paddingBottom = `${padding}px` // Mainly useful for leaf nodes
     }
+    /* Border */
     setBorder(border) {
         this.borderTop    = border
         this.borderBottom = border
         this.borderLeft   = border
         this.borderRight  = border
         this.HTML_element.style.borderWidth = `${border}px` // Mainly useful for leaf nodes
+        if (border !== 0) {
+            if (this.HTML_element.style.borderColor === '') {
+                this.applyStyle({borderColor: generateColor()})
+            }
+            if (this.HTML_element.style.borderStyle === '') {
+                this.applyStyle({borderStyle: 'solid'})
+            }
+        }
     }
     setBorderTop(border) {
         this.borderTop = border
@@ -169,9 +215,11 @@ class Component {
         this.borderBottom = border
         this.HTML_element.style.borderBottomWidth = `${border}px` // Mainly useful for leaf nodes
     }
-    setGapBetweenChildren(gap) {
-        this.gapBetweenChildren = gap
+    /* Content setting */
+    setInnerHTML(msg) {
+        this.HTML_element.innerHTML = msg + '&#8203;' // Prevents selections at the end of one paragraph from bleeding over into the next paragraph
     }
+    /* CSS Styling */
     applyStyle(obj) {
         Object.entries(obj).forEach(([key, value]) => {
             this.HTML_element.style[key] = value
@@ -183,9 +231,10 @@ class Component {
             this.HTML_element.classList.toggle(className)
         })
     }
-    setInnerHTML(msg) {
-        this.HTML_element.innerHTML = msg + '&#8203;' // Prevents selections at the end of one paragraph from bleeding over into the next paragraph
+    setBackgroundColor(color) {
+        this.HTML_element.style.background = color
     }
+    /* Internal methods */
     setAbsoluteTop(top) {
         this.absoluteTop = top
         this.HTML_element.style.top = `${top}px`
@@ -214,6 +263,7 @@ class Component {
     stickinessHandler() {
         let page_y = window.pageYOffset
         let node_y = this.getFixedTop()
+        console.log(page_y, node_y)
         if (page_y > node_y) {
             this.HTML_element.style.position = 'fixed'
             this.HTML_element.style.top = `0`
@@ -357,7 +407,12 @@ class Component {
 
 }
 
-class VerticalComponent extends Component {
+class LeafComponent extends Component {
+    widthConsumedByChildren() {return 0}
+    widenChildren() {}
+}
+
+class VerticalList extends Component {
     widthConsumedByChildren() {
         let runningMax = 0
         this.children.forEach((child) => {
@@ -376,71 +431,6 @@ class VerticalComponent extends Component {
             )
         })
     }
-}
-
-class LeafComponent extends Component {
-    widthConsumedByChildren() {return 0}
-    widenChildren() {}
-}
-
-class HorizontalComponent extends Component {
-    widthConsumedByChildren() {
-        let runningSum = 0
-        let flag = false
-        this.children.forEach((child) => {
-            runningSum += child.outerize(child.innerWidthActual)
-            if (flag) {
-                runningSum += this.gapBetweenChildren
-            }
-            flag = true
-        })
-        return runningSum
-    }
-    widenChildren() {
-        let widthConsumedByChildren = this.widthConsumedByChildren()
-        let widenableChildren = new Set(this.children)
-        let flag = false
-        while (!flag) {
-            let dmin = Number.POSITIVE_INFINITY
-            widenableChildren.forEach((child) => {
-                let d = child.innerWidthMaximum - child.innerWidthActual
-                if (d > 0) {
-                    dmin = Math.min(dmin, d)
-                } else {
-                    widenableChildren.delete(child)
-                }
-            })
-            if (widenableChildren.size === 0) {
-                flag = true
-            } else {
-                let hypotheticalExtraWidth = dmin * widenableChildren.size
-                let extraWidthAvailable = this.innerWidthActual - widthConsumedByChildren
-                if (hypotheticalExtraWidth <= extraWidthAvailable) {
-                    widenableChildren.forEach((child) => {
-                        child.innerWidthActual += dmin
-                    })
-                    widthConsumedByChildren += hypotheticalExtraWidth
-                } else {
-                    flag = true
-                    let reduced_dmin = Math.floor(extraWidthAvailable/widenableChildren.size)
-                    widenableChildren.forEach((child) => {
-                        child.innerWidthActual += reduced_dmin
-                    })
-                    // Single pixel trick
-                    extraWidthAvailable = extraWidthAvailable - reduced_dmin*widenableChildren.size
-                    widenableChildren.forEach((child) => {
-                        if (extraWidthAvailable > 1) {
-                            child.innerWidthActual += 1
-                            extraWidthAvailable    -= 1
-                        }
-                    })
-                }
-            }
-        }
-    }
-}
-
-class VerticalList extends VerticalComponent {
     init() {
         this.listOfChildren = []
     }
@@ -457,15 +447,14 @@ class VerticalList extends VerticalComponent {
             let x = this.paddingLeft + (this.innerWidthActual - child.outerize(child.innerWidthActual))*child.alignment
             child.setAbsoluteLeft(x)
         })
-        let height = this.paddingTop
-        let flag = false
+        let height = this.paddingTop // This looks like it should be this.paddingTop + this.borderTop, but that actually doesn't work for some reason
+        let marginBottom = undefined
         this.listOfChildren.forEach((child) => {
             /* Height of parent element */
-            if (flag) {
-                height += this.gapBetweenChildren
-            } else {
-                flag = true
+            if (marginBottom !== undefined) {
+                height += Math.max(child.marginTop, marginBottom)
             }
+            marginBottom = child.marginBottom
             child.setAbsoluteTop(height)
             height += child.HTML_element.offsetHeight
         })
@@ -476,7 +465,7 @@ class VerticalList extends VerticalComponent {
     }
 }
 
-class HorizontalList extends HorizontalComponent {
+class HorizontalList extends Component {
     init() {
         this.currentAppendSide = 0
         this.childrenPair = [[], []]
@@ -528,35 +517,96 @@ class HorizontalList extends HorizontalComponent {
     toggleAppendSide() {
         this.currentAppendSide = 1 - this.currentAppendSide
     }
-    defaultTagName() {return 'span'}
-    render() {
-        /* Set x values of children */
-        let innerHeight = 0
-        let count = 0
-        while (count < 2) {
-            if (count === 0) {
-                var listOfChildren = this.childrenPair[0]
-                var x = this.paddingLeft + this.borderLeft
-            } else {
-                var listOfChildren = this.childrenPair[1]
-                var x = this.paddingRight + this.borderRight
+    defaultTagName() {return 'div'}
+    widthConsumedByChildren() {
+        let runningSum = 0
+        let marginRight = undefined
+        this.childrenPair[0].forEach((child) => {
+            runningSum += child.outerize(child.innerWidthActual)
+            if (marginRight !== undefined) {
+                runningSum += Math.max(marginRight, child.marginLeft)
             }
-            let flag = false
-            listOfChildren.forEach((child) => {
-                if (flag) {
-                    x += this.gapBetweenChildren
+            marginRight = child.marginRight
+        })
+        let marginLeft = undefined
+        this.childrenPair[1].forEach((child) => {
+            runningSum += child.outerize(child.innerWidthActual)
+            if (marginLeft !== undefined) {
+                runningSum += Math.max(child.marginRight, marginLeft)
+            }
+            marginLeft = child.marginLeft
+        })
+        return runningSum
+    }
+    widenChildren() {
+        let widthConsumedByChildren = this.widthConsumedByChildren()
+        let widenableChildren = new Set(this.children)
+        let flag = false
+        while (!flag) {
+            let dmin = Number.POSITIVE_INFINITY
+            widenableChildren.forEach((child) => {
+                let d = child.innerWidthMaximum - child.innerWidthActual
+                if (d > 0) {
+                    dmin = Math.min(dmin, d)
+                } else {
+                    widenableChildren.delete(child)
+                }
+            })
+            if (widenableChildren.size === 0) {
+                flag = true
+            } else {
+                let hypotheticalExtraWidth = dmin * widenableChildren.size
+                let extraWidthAvailable = this.innerWidthActual - widthConsumedByChildren
+                if (hypotheticalExtraWidth <= extraWidthAvailable) {
+                    widenableChildren.forEach((child) => {
+                        child.innerWidthActual += dmin
+                    })
+                    widthConsumedByChildren += hypotheticalExtraWidth
                 } else {
                     flag = true
+                    let reduced_dmin = Math.floor(extraWidthAvailable/widenableChildren.size)
+                    widenableChildren.forEach((child) => {
+                        child.innerWidthActual += reduced_dmin
+                    })
+                    // Single pixel trick
+                    extraWidthAvailable = extraWidthAvailable - reduced_dmin*widenableChildren.size
+                    widenableChildren.forEach((child) => {
+                        if (extraWidthAvailable > 1) {
+                            child.innerWidthActual += 1
+                            extraWidthAvailable    -= 1
+                        }
+                    })
                 }
+            }
+        }
+    }
+    render() {
+        let innerHeight = 0
+        /* Set x values of children */
+        {
+            var x = this.paddingLeft + this.borderLeft
+            let marginRight = undefined
+            this.childrenPair[0].forEach((child) => {
                 innerHeight = Math.max(innerHeight, child.HTML_element.offsetHeight) // This line seems suspect. Maybe don't use child.offsetHeight here
-                if (count === 0) {
-                    child.setAbsoluteLeft(x)
-                } else {
-                    child.setAbsoluteRight(x)
+                if (marginRight !== undefined) {
+                    x += Math.max(marginRight, child.marginLeft)
                 }
+                marginRight = child.marginRight
+                child.setAbsoluteLeft(x)
                 x += child.HTML_element.offsetWidth
             })
-            count += 1
+        } {
+            var x = this.paddingRight + this.borderRight
+            let marginLeft = undefined
+            this.childrenPair[1].forEach((child) => {
+                innerHeight = Math.max(innerHeight, child.HTML_element.offsetHeight) // This line seems suspect. Maybe don't use child.offsetHeight here
+                if (marginLeft !== undefined) {
+                    x += Math.max(marginLeft, child.marginRight)
+                }
+                marginLeft = child.marginLeft
+                child.setAbsoluteRight(x)
+                x += child.HTML_element.offsetWidth
+            })
         }
         /* Set height of the current element */
         innerHeight = Math.max(innerHeight, this.innerHeightMinimum) // This line seems suspect.

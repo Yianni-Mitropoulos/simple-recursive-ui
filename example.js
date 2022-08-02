@@ -1,62 +1,59 @@
 function BODY(...args) {
     return new VerticalList(
         ['setTagName', 'body'],
-        ['setInnerWidthMinimum', 800],
-        ['setPadding', 0],
-        ['setGapBetweenChildren', 0],
         ...args,
     )
 }
 
+outerWidths = [700, 1200]
+
 function HERO_IMAGE() {
-    return new HorizontalList(
-        new VerticalList(
+    return new VerticalList(
+        ['setBackgroundColor', 'LightGreen'],
+        new HorizontalList(
+            ['setAlignment', 1/2],
+            ['setInnerHeightMinimum', 300],
+            ['setInnerWidth', ...outerWidths],
             new Text(
                 "SRUI",
                 ["applyStyle", {
-                    background: 'Transparent',
                     textAlign: 'center',
                     fontSize: '8em'
                 }],
                 ['setAlignment', 1/2],
-                ['setInnerWidthDesired', Number.POSITIVE_INFINITY]
+                ['setInnerWidthDesired', 0]
             ),
-            ['applyStyle', {background: 'Transparent'}],
-            ['setAlignment', 1/2],
-        ),
-        new VerticalList(
-            new Image(
-                ['setImageAttributes', 'https://loremflickr.com/240/240', 'Filler Image'],
-                ['setInnerWidthDesired', 240],
-                ['setInnerHeightMinimum', 240],
-                ['applyStyle', {background: 'Green'}],
-                ['setPadding', 0],
+            ['toggleAppendSide'],
+            new VerticalList(
+                new Image(
+                    ['setImageAttributes', 'https://loremflickr.com/240/240', 'Filler Image'],
+                    ['setInnerWidth', 240],
+                    ['setInnerHeightMinimum', 240],
+                    ['setAlignment', 1/2],
+                ),
                 ['setAlignment', 1/2],
+                ['setInnerWidthDesired', 0]
             ),
-            ['applyStyle', {background: 'Transparent'}],
-            ['setAlignment', 1/2],
         ),
-        ['setInnerHeightMinimum', 300],
-        ['applyStyle', {background: 'Green'}],
-    )
+    )    
 }
 
 function NAVBAR(...args) {
     return new VerticalList(
-        ['setPadding', 0],
-        ['applyStyle', {background: 'Blue'}],
+        ['setBackgroundColor', 'Blue'],
         ['makeSticky'],
         new HorizontalList(
             ['toggleAppendSide'],
             ['setAlignment', 1/2],
-            ['setInnerWidth', 700, 800],
-            ['setPadding', 0],
-            ['setGapBetweenChildren', 0],
-            ['applyStyle', {background: 'Blue'}],
+            ['setInnerWidth', ...outerWidths],
+            ['setBackgroundColor', 'Blue'],
             ['SRUI_forEachChild',
                 ['toggleClass', button_CSSC],
                 ['addEventListener', 'click', () => {alert('foo')}],
                 ['setInnerWidth', 80, 100],
+                ['setPadding', 8],
+                ['setBackgroundColor', 'Red'],
+                ['setBorder', 5],
             ],
             ...args,
         )
@@ -65,20 +62,21 @@ function NAVBAR(...args) {
 
 function MAIN(...args) {
     return new VerticalList(
-        ['setInnerWidth', 600, 700],
+        ['setPadding', 50], // Must come before next command
+        ['setOuterWidth', ...outerWidths],
         ['setAlignment', 1/2],
-        ['setPadding', 50],
-        ['setGapBetweenChildren', 50],
+        ['SRUI_forEachChild', 
+            ['setMargin', 20],
+        ],
         ...args,
     )
 }
 
 function FOOTER(...args) {
     return new HorizontalList(
-        ['setInnerWidth', 600, 700],
-        ['setAlignment', 1/2],
         ['setPadding', 50],
-        ['setGapBetweenChildren', 50],
+        ['setOuterWidth', ...outerWidths],
+        ['setAlignment', 1/2],
         ...args,
     )
 }
@@ -119,7 +117,6 @@ function CLICK_ROW(msg, a, b, start, end, headerStatus) {
         ),
         new ClickRow(
             ['setCheckboxClasses', uncheckable_CSSC, unchecked_CSSC, checked_CSSC],
-            ['setGapBetweenChildren', 0],
             ['setHeaderStatus', headerStatus],
             ...clickRowInstructionList(a, b, start, end)
         )
@@ -149,7 +146,6 @@ BODY(
     MAIN(
         new VerticalList(
             new HorizontalList(
-                ['setGapBetweenChildren', 30],
                 new TextInput(['setPlaceholder', 'foo'], ['applyStyle', {textAlign: "center"}]),
                 new TextInput(['setPlaceholder', 'bar'], ['applyStyle', {textAlign: "center"}])
             ),
