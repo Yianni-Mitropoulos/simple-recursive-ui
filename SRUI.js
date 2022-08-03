@@ -264,12 +264,22 @@ class Component {
             this.HTML_element.style.top = `${node_y}px`
         }
     }
+    scrollIntoView() {
+        let stickyMax = 0
+        stickySet.forEach((node) => {
+            stickyMax = Math.max(stickyMax, node.HTML_element.offsetHeight)
+        })
+        window.scrollTo({
+            behavior: 'smooth',
+            top: this.HTML_element.getBoundingClientRect().top + window.pageYOffset
+                 - this.marginTop
+                 - stickyMax
+            }
+        )
+    }
 
     /* 
      * Render methods
-     *
-     * Mostly new code
-     * 
      */
 
     renderDescendants() {
