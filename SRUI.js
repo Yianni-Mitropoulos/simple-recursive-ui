@@ -628,6 +628,9 @@ class LeafComponent extends Component {
         /* This only works if the node has an inner_HTML_element */
         this.inner_HTML_element.innerHTML = msg + '&#8203;' // Prevents selections at the end of one paragraph from bleeding over into the next paragraph
     }
+    addEventListener(eventName, handler) {
+        this.inner_HTML_element.addEventListener(eventName, handler.bind(this))
+    }
     /* Styles and Appearance */
     applyStyle(obj) {
         Object.entries(obj).forEach(([key, value]) => {
@@ -813,7 +816,7 @@ class ClickRow extends HorizontalList {
                     let clickStack = this.findNode("clickStack")
                     let nodes = clickStack.findNodes(this.SRUI_name)
                     nodes.forEach((node) => {
-                        node.HTML_element.click()
+                        node.inner_HTML_element.click()
                     })
                 }]
             )
