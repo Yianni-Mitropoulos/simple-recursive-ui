@@ -16,6 +16,7 @@ function next_id() {
 
 class Component {
     init() {}
+    defaultTagName() {return 'div'}
     constructor(...args) {
         /* Construct a corresponding HTML element, or else use the document.body element */
         if (args.length !== 0 && args[0][0] === 'setTagName') {
@@ -217,7 +218,8 @@ class Component {
     }
     /* Content setting */
     setInnerHTML(msg) {
-        this.HTML_element.innerHTML = msg + '&#8203;' // Prevents selections at the end of one paragraph from bleeding over into the next paragraph
+        /* This only works if the node has an inner_HTML_element */
+        this.inner_HTML_element.innerHTML = msg + '&#8203;' // Prevents selections at the end of one paragraph from bleeding over into the next paragraph
     }
     /* CSS Styling */
     applyStyle(obj) {
@@ -263,7 +265,6 @@ class Component {
     stickinessHandler() {
         let page_y = window.pageYOffset
         let node_y = this.getFixedTop()
-        console.log(page_y, node_y)
         if (page_y > node_y) {
             this.HTML_element.style.position = 'fixed'
             this.HTML_element.style.top = `0`
@@ -319,7 +320,11 @@ class Component {
         this.children.forEach((child) => child.computeWidths_widenChildrenRecursively())
     }
     render() {
-        let h = Math.max(this.innerHeightMinimum, this.HTML_element.offsetHeight) // This line seems suspect.
+        try {
+            var h = Math.max(this.innerHeightMinimum, this.inner_HTML_element.offsetHeight)
+        } catch {
+            var h = Math.max(this.innerHeightMinimum, this.HTML_element.offsetHeight)
+        }
         this.HTML_element.style.height = `${h}px`
     }
 
@@ -407,11 +412,6 @@ class Component {
 
 }
 
-class LeafComponent extends Component {
-    widthConsumedByChildren() {return 0}
-    widenChildren() {}
-}
-
 class VerticalList extends Component {
     widthConsumedByChildren() {
         let runningMax = 0
@@ -438,13 +438,10 @@ class VerticalList extends Component {
         this.listOfChildren.push(child)
         super.append(child)
     }
-    defaultTagName() {
-        return 'div'
-    }
     render() {
         /* Align child nodes appropriately */
         this.children.forEach((child) => {
-            let x = this.paddingLeft + (this.innerWidthActual - child.outerize(child.innerWidthActual))*child.alignment
+            let x = this.paddingLeft + (this.innerWidthActual - child.outerize(child.innerWidthActual)) * child.alignment
             child.setAbsoluteLeft(x)
         })
         let height = this.paddingTop // This looks like it should be this.paddingTop + this.borderTop, but that actually doesn't work for some reason
@@ -457,6 +454,7 @@ class VerticalList extends Component {
             marginBottom = child.marginBottom
             child.setAbsoluteTop(height)
             height += child.HTML_element.offsetHeight
+            console.log(child, child.HTML_element.offsetHeight)
         })
         /* Set the height of the current component */
         height += this.borderTop + this.paddingBottom + this.borderBottom
@@ -517,7 +515,6 @@ class HorizontalList extends Component {
     toggleAppendSide() {
         this.currentAppendSide = 1 - this.currentAppendSide
     }
-    defaultTagName() {return 'div'}
     widthConsumedByChildren() {
         let runningSum = 0
         let marginRight = undefined
@@ -623,50 +620,69 @@ class HorizontalList extends Component {
 
 /* Leaves */
 
-class Text extends LeafComponent {
-    defaultTagName() {return 'p'}
+class LeafComponent extends Component {
+    init(...args) {
+        super.init(...args)
+        /* Create an inner element of the appropriate type */
+        this.inner_HTML_element = document.createElement(this.defaultInnerTagName())
+        this.HTML_element.append(this.inner_HTML_element)
+        /* Ensure the inner HTML element fills the parent completely */
+        this.inner_HTML_element.style.top    = "0"
+        this.inner_HTML_element.style.left   = "0"
+        this.inner_HTML_element.style.width  = "100%"
+    }
+    widthConsumedByChildren() {return 0}
+    widenChildren() {}
 }
 
-class Button extends LeafComponent {
-    defaultTagName() {return 'btn'}
+class Text extends LeafComponent {
+    defaultInnerTagName() {return 'p'}
 }
 
 class Image extends LeafComponent {
-    defaultTagName() {return 'img'}
+    defaultInnerTagName() {return 'img'}
     setImageAttributes(src, alt) {
-        this.HTML_element.src = src
-        this.HTML_element.alt = alt
-        this.HTML_element.addEventListener('load', () => {
+        this.inner_HTML_element.src = src
+        this.inner_HTML_element.alt = alt
+        this.inner_HTML_element.addEventListener('load', () => {
             SRUI_body.renderDescendants()
         })
     }
 }
 
 class TextInput extends LeafComponent {
-    defaultTagName() {return 'input'}
-    init() {this.HTML_element.setAttribute('type', 'text')}
+    defaultInnerTagName() {return 'input'}
+    init(...args) {
+        super.init(...args)
+        this.inner_HTML_element.setAttribute('type', 'text')
+    }
     getValue() {
-        return this.HTML_element.value
+        return this.inner_HTML_element.value
     }
     setValue(value) {
-        this.HTML_element.value = value
+        this.inner_HTML_element.value = value
     }
     setPlaceholder(placeholder) {
         this.placeholder = placeholder
-        this.HTML_element.setAttribute('placeholder', placeholder)
+        this.inner_HTML_element.setAttribute('placeholder', placeholder)
         this.addEventListener('focus', () => {
-            this.HTML_element.setAttribute('placeholder', '')
+            this.inner_HTML_element.setAttribute('placeholder', '')
         })
         this.addEventListener('blur',  () => {
-            this.HTML_element.setAttribute('placeholder', this.placeholder)
+            this.inner_HTML_element.setAttribute('placeholder', this.placeholder)
         })
     }
+}
+
+class Button extends LeafComponent {
+    defaultInnerTagName() {return 'btn'}
 }
 
 /* Checkboxes and Checklists */
 
 class Checkbox extends Button {
-    init() {
+    init(...args) {
+        super.init(...args)
         this.checkboxValue = 0
     }
     applyAppropriateClass() {
