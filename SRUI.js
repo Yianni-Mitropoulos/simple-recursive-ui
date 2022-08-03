@@ -648,7 +648,7 @@ class LeafComponent extends Component {
         })
         return this
     }
-    toggleClass = (...classNames) => {
+    toggleClass(...classNames) {
         classNames.forEach((className) => {
             this.inner_HTML_element.classList.toggle(className)
         })
