@@ -163,26 +163,21 @@ class Component {
         this.paddingBottom = padding
         this.paddingLeft   = padding
         this.paddingRight  = padding
-        this.HTML_element.style.padding = `${padding}px` // Mainly useful for leaf nodes
         if (padding !== 0 && this.HTML_element.style.background === '') {
             this.applyStyle({background: generateColor()})
         }
     }
     setPaddingTop(padding) {
         this.paddingTop = padding
-        this.HTML_element.style.paddingTop = `${padding}px` // Mainly useful for leaf nodes
     }
     setPaddingLeft(padding) {
         this.paddingLeft = padding
-        this.HTML_element.style.paddingLeft = `${padding}px` // Mainly useful for leaf nodes
     }
     setPaddingRight(padding) {
         this.paddingRight = padding
-        this.HTML_element.style.paddingRight = `${padding}px` // Mainly useful for leaf nodes
     }
     setPaddingBottom(padding) {
         this.paddingBottom = padding
-        this.HTML_element.style.paddingBottom = `${padding}px` // Mainly useful for leaf nodes
     }
     /* Border */
     setBorder(border) {
@@ -621,18 +616,73 @@ class HorizontalList extends Component {
 /* Leaves */
 
 class LeafComponent extends Component {
+    render() {
+        super.render()
+        this.inner_HTML_element.style.top = `${-this.borderTop}px`
+    }
     init(...args) {
         super.init(...args)
         /* Create an inner element of the appropriate type */
         this.inner_HTML_element = document.createElement(this.defaultInnerTagName())
         this.HTML_element.append(this.inner_HTML_element)
         /* Ensure the inner HTML element fills the parent completely */
-        this.inner_HTML_element.style.top    = "0"
         this.inner_HTML_element.style.left   = "0"
         this.inner_HTML_element.style.width  = "100%"
     }
     widthConsumedByChildren() {return 0}
     widenChildren() {}
+    /* Padding */
+    setPadding(padding) {
+        super.setPadding(padding)
+        this.HTML_element.style.padding = `${padding}px`
+        try {this.inner_HTML_element.style.padding = `${padding}px`} catch {}
+    }
+    setPaddingTop(padding) {
+        super.setPaddingTop(padding)
+        this.HTML_element.style.paddingTop = `${padding}px`
+        try {this.inner_HTML_element.style.paddingTop = `${padding}px`} catch {}
+    }
+    setPaddingLeft(padding) {
+        super.setPaddingLeft(padding)
+        this.HTML_element.style.paddingLeft = `${padding}px`
+        try {this.inner_HTML_element.style.paddingLeft = `${padding}px`} catch {}
+    }
+    setPaddingRight(padding) {
+        super.setPaddingRight(padding)
+        this.HTML_element.style.paddingRight = `${padding}px`
+        try {this.inner_HTML_element.style.paddingRight = `${padding}px`} catch {}
+    }
+    setPaddingBottom(padding) {
+        super.setPaddingBottom(padding)
+        this.HTML_element.style.paddingBottom = `${padding}px`
+        try {this.inner_HTML_element.style.paddingRight = `${padding}px`} catch {}
+    }
+    /* Border */
+    setBorder(border) {
+        super.setBorder(border)
+        this.HTML_element.style.borderWidth = `${border}px` // Mainly useful for leaf nodes
+        try {this.inner_HTML_element.style.borderWidth = `${border}px`} catch {}
+    }
+    setBorderTop(border) {
+        super.setBorderTop(border)
+        this.HTML_element.style.borderTopWidth = `${border}px` // Mainly useful for leaf nodes
+        try {this.inner_HTML_element.style.borderTopWidth = `${border}px`} catch {}
+    }
+    setBorderLeft(border) {
+        super.setBorderLeft(border)
+        this.HTML_element.style.borderLeftWidth = `${border}px` // Mainly useful for leaf nodes
+        try {this.inner_HTML_element.style.borderLeftWidth = `${border}px`} catch {}
+    }
+    setBorderRight(border) {
+        super.setBorderRight(border)
+        this.HTML_element.style.borderRightWidth = `${border}px` // Mainly useful for leaf nodes
+        try {this.inner_HTML_element.style.borderRightWidth = `${border}px`} catch {}
+    }
+    setBorderBottom(border) {
+        super.setBorderBottom(border)
+        this.HTML_element.style.borderBottomWidth = `${border}px` // Mainly useful for leaf nodes
+        try {this.inner_HTML_element.style.borderBottomWidth = `${border}px`} catch {}
+    }
 }
 
 class Text extends LeafComponent {

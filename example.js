@@ -51,9 +51,9 @@ function NAVBAR(...args) {
                 ['toggleClass', button_CSSC],
                 ['addEventListener', 'click', () => {alert('foo')}],
                 ['setInnerWidth', 80, 100],
-                ['setPadding', 8],
+                ['setPadding', 20],
                 ['setBackgroundColor', 'Red'],
-                ['setBorder', 5],
+                ['setBorder', 10],
             ],
             ...args,
         )
