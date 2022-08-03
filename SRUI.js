@@ -211,11 +211,6 @@ class Component {
         this.borderBottom = border
         this.HTML_element.style.borderBottomWidth = `${border}px` // Mainly useful for leaf nodes
     }
-    /* Content setting */
-    setInnerHTML(msg) {
-        /* This only works if the node has an inner_HTML_element */
-        this.inner_HTML_element.innerHTML = msg + '&#8203;' // Prevents selections at the end of one paragraph from bleeding over into the next paragraph
-    }
     /* CSS Styling */
     applyStyle(obj) {
         Object.entries(obj).forEach(([key, value]) => {
@@ -616,21 +611,39 @@ class HorizontalList extends Component {
 /* Leaves */
 
 class LeafComponent extends Component {
-    render() {
-        super.render()
-        this.inner_HTML_element.style.top = `${-this.borderTop}px`
-    }
     init(...args) {
         super.init(...args)
         /* Create an inner element of the appropriate type */
         this.inner_HTML_element = document.createElement(this.defaultInnerTagName())
         this.HTML_element.append(this.inner_HTML_element)
         /* Ensure the inner HTML element fills the parent completely */
+        this.inner_HTML_element.style.top    = "0"
         this.inner_HTML_element.style.left   = "0"
         this.inner_HTML_element.style.width  = "100%"
     }
     widthConsumedByChildren() {return 0}
     widenChildren() {}
+    /* Set content */
+    setInnerHTML(msg) {
+        /* This only works if the node has an inner_HTML_element */
+        this.inner_HTML_element.innerHTML = msg + '&#8203;' // Prevents selections at the end of one paragraph from bleeding over into the next paragraph
+    }
+    /* Styles and Appearance */
+    applyStyle(obj) {
+        Object.entries(obj).forEach(([key, value]) => {
+            this.inner_HTML_element.style[key] = value
+        })
+        return this
+    }
+    toggleClass = (...classNames) => {
+        classNames.forEach((className) => {
+            this.inner_HTML_element.classList.toggle(className)
+        })
+        return this
+    }
+    setBackgroundColor(color) {
+        this.inner_HTML_element.style.background = color
+    }
     /* Padding */
     setPadding(padding) {
         super.setPadding(padding)
@@ -765,7 +778,7 @@ class Checkbox extends Button {
     }
     setCheckboxValue(value) {
         this.checkboxValue = value
-        this.HTML_element.removeAttribute('class')
+        this.inner_HTML_element.removeAttribute('class')
         this.applyAppropriateClass()
     }
 }
