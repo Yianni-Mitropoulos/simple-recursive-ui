@@ -218,7 +218,7 @@ class Component {
         })
         return this
     }
-    toggleClass = (...classNames) => {
+    toggleClass(...classNames) {
         classNames.forEach((className) => {
             this.HTML_element.classList.toggle(className)
         })
