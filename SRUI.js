@@ -731,12 +731,19 @@ class TextInput extends LeafComponent {
     init(...args) {
         super.init(...args)
         this.inner_HTML_element.setAttribute('type', 'text')
+        this.validator = () => {return true}
     }
     getValue() {
         return this.inner_HTML_element.value
     }
     setValue(value) {
         this.inner_HTML_element.value = value
+    }
+    setValidator(f) {
+        let F = function() {
+            return f(this.getValue(), this)
+        }
+        this.validator = F.bind(this)
     }
     setPlaceholder(placeholder) {
         this.placeholder = placeholder
@@ -752,6 +759,24 @@ class TextInput extends LeafComponent {
 
 class Button extends LeafComponent {
     defaultInnerTagName() {return 'btn'}
+    validateNearbyInputValues(onSuccess, ...args) {
+        let obj = {}
+        let flag = false
+        args.forEach((argument) => {
+            let inputNode = this.findNode(argument)
+            let errorNode = this.findNode(`${argument}Invalid`)
+            obj[argument] = inputNode.getValue()
+            if (inputNode.validate()) {
+                errorNode.applyStyle({display: "none"})
+            } else {
+                errorNode.applyStyle({display: "initial"})
+                flag = true
+            }
+        })
+        if (!flag) {
+            onSuccess(obj)
+        }
+    }
 }
 
 /* Checkboxes and Checklists */
