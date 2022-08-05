@@ -743,7 +743,7 @@ class TextInput extends LeafComponent {
         let F = function() {
             return f(this.getValue(), this)
         }
-        this.validator = F.bind(this)
+        this.validate = F.bind(this)
     }
     setPlaceholder(placeholder) {
         this.placeholder = placeholder
