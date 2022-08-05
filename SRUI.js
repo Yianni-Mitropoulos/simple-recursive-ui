@@ -248,16 +248,17 @@ class Component {
         this.absoluteRight = right
         this.HTML_element.style.right = `${right}px`
     }
-    makeSticky() {
+    makeSticky(stickinessOffset) {
+        this.stickinessOffset = stickinessOffset
         stickySet.add(this)
         window.addEventListener('scroll', this.stickinessHandler.bind(this))
     }
     stickinessHandler() {
         let page_y = window.pageYOffset
         let node_y = this.getFixedTop()
-        if (page_y > node_y) {
+        if (page_y > node_y - this.stickinessOffset) {
             this.HTML_element.style.position = 'fixed'
-            this.HTML_element.style.top = `0`
+            this.HTML_element.style.top = `${this.stickinessOffset}px`
             this.HTML_element.style.zIndex = `1000`
         } else {
             this.HTML_element.style.position = 'absolute'
@@ -454,7 +455,6 @@ class VerticalList extends Component {
             marginBottom = child.marginBottom
             child.setAbsoluteTop(height)
             height += child.HTML_element.offsetHeight
-            console.log(child, child.HTML_element.offsetHeight)
         })
         /* Set the height of the current component */
         height += this.borderTop + this.paddingBottom + this.borderBottom

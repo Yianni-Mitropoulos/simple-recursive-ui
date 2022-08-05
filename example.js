@@ -35,13 +35,13 @@ function HERO_IMAGE() {
                 ['setInnerWidthDesired', 0]
             ),
         ),
-    )    
+    )
 }
 
 function NAVBAR(...args) {
     return new VerticalList(
         ['setBackgroundColor', 'Blue'],
-        ['makeSticky'],
+        ['makeSticky', 0],
         new HorizontalList(
             ['toggleAppendSide'],
             ['setAlignment', 1/2],
